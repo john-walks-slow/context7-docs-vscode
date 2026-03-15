@@ -78,6 +78,11 @@ export function buildHtml(options: HtmlOptions): string {
       const content = document.getElementById('content');
       const refreshBtn = document.getElementById('refreshBtn');
 
+      // 更新徽章（loading 时显示 0）
+      document.getElementById('badge-all').textContent = state.results.length;
+      document.getElementById('badge-code').textContent = state.results.filter(r => r.type === 'code').length;
+      document.getElementById('badge-info').textContent = state.results.filter(r => r.type === 'info').length;
+
       if (state.loading) {
         content.innerHTML = '<div class="loading"><span></span><span></span><span></span><span></span><span></span></div>';
         if (refreshBtn) refreshBtn.disabled = true;
@@ -92,11 +97,6 @@ export function buildHtml(options: HtmlOptions): string {
       const filtered = state.filter === 'all'
         ? state.results
         : state.results.filter(r => r.type === state.filter);
-
-      // 更新徽章
-      document.getElementById('badge-all').textContent = state.results.length;
-      document.getElementById('badge-code').textContent = state.results.filter(r => r.type === 'code').length;
-      document.getElementById('badge-info').textContent = state.results.filter(r => r.type === 'info').length;
 
       if (filtered.length === 0) {
         const iconColor = '${isDark ? '#ffffff' : '#000000'}';
