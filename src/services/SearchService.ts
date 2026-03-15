@@ -203,7 +203,7 @@ export class SearchService {
   }
 
   /**
-   * 转换搜索结果（info 在前，code 在后）
+   * 转换搜索结果
    */
   public async transformResults(
     response: Context7Response,
@@ -217,20 +217,7 @@ export class SearchService {
 
     const results: SearchResult[] = []
 
-    // 处理信息片段（放在前面）
-    if (response.infoSnippets) {
-      for (const info of response.infoSnippets) {
-        results.push({
-          type: 'info',
-          title: info.breadcrumb || 'Documentation',
-          content: info.content || '',
-          sourceUrl: info.pageId, // 源文档 URL
-          tokens: info.contentTokens,
-        })
-      }
-    }
-
-    // 处理代码片段（放在后面）
+    // 处理代码片段
     if (response.codeSnippets) {
       for (const snippet of response.codeSnippets) {
         if (snippet.codeList?.length > 0) {
@@ -250,6 +237,19 @@ export class SearchService {
             sourceUrl: snippet.codeId, // 源代码 URL
             pageTitle: snippet.pageTitle,
             tokens: snippet.codeTokens,
+          })
+        }
+      }
+
+      // 处理信息片段
+      if (response.infoSnippets) {
+        for (const info of response.infoSnippets) {
+          results.push({
+            type: 'info',
+            title: info.breadcrumb || 'Documentation',
+            content: info.content || '',
+            sourceUrl: info.pageId, // 源文档 URL
+            tokens: info.contentTokens,
           })
         }
       }
