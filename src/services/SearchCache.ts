@@ -38,7 +38,7 @@ export class SearchCache {
     const key = this.getKey(libraryId, query)
     const entry = this.cache.get(key)
 
-    if (!entry) return null
+    if (!entry) {return null}
 
     // 检查是否过期
     if (Date.now() - entry.timestamp > this.ttl) {

@@ -42,7 +42,7 @@ export class SearchService {
   ): Promise<SearchResult[]> {
     // 检查缓存
     const cached = this._cache.get(libraryId, query)
-    if (cached) return cached
+    if (cached) {return cached}
 
     // 执行搜索
     const response = await client.searchWithLibraryId(libraryId, query)
@@ -71,7 +71,7 @@ export class SearchService {
    * 初始化 Shiki 高亮器
    */
   public async initHighlighter(): Promise<void> {
-    if (this._highlighter) return
+    if (this._highlighter) {return}
 
     this._highlighter = await createHighlighter({
       themes: ['github-dark', 'github-light', 'vitesse-dark', 'vitesse-light'],
@@ -121,13 +121,13 @@ export class SearchService {
    * 检测代码语言
    */
   public detectLanguage(code: string): string {
-    if (code.includes('import React') || code.includes('useState')) return 'tsx'
+    if (code.includes('import React') || code.includes('useState')) {return 'tsx'}
     if (code.includes('interface ') || code.includes(': string'))
-      return 'typescript'
-    if (code.includes('def ') || code.includes('import ')) return 'python'
-    if (code.includes('func ') || code.includes('package ')) return 'go'
-    if (code.includes('fn ') || code.includes('let mut')) return 'rust'
-    if (code.includes('class ') && code.includes('{')) return 'javascript'
+      {return 'typescript'}
+    if (code.includes('def ') || code.includes('import ')) {return 'python'}
+    if (code.includes('func ') || code.includes('package ')) {return 'go'}
+    if (code.includes('fn ') || code.includes('let mut')) {return 'rust'}
+    if (code.includes('class ') && code.includes('{')) {return 'javascript'}
     return 'text'
   }
 

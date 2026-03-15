@@ -62,7 +62,7 @@ export const PATH_PATTERNS: PathPattern[] = [
   // C# (NuGet)
   {
     languages: ['csharp'],
-    pattern: /[\/\\](?:\.nuget\/packages|packages)[\/\\]([^\/\\]+)/,
+    pattern: /[/\\](?:\.nuget\/packages|packages)[/\\]([^/\\]+)/,
   },
 
   // Ruby (rbenv, rvm, chruby, user gems)

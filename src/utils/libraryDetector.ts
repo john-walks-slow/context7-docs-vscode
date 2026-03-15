@@ -18,11 +18,11 @@ export class LibraryDetector {
    */
   async detectLibraryFromSelection(): Promise<LibraryInfo | null> {
     const editor = vscode.window.activeTextEditor
-    if (!editor) return null
+    if (!editor) {return null}
 
     const selection = editor.selection
     const selectedText = editor.document.getText(selection).trim()
-    if (!selectedText) return null
+    if (!selectedText) {return null}
 
     // 尝试 LSP 追踪定义，传递当前文档的语言 ID
     const library = await this.traceDefinition(
@@ -52,7 +52,7 @@ export class LibraryDetector {
         vscode.Location[] | vscode.LocationLink[]
       >('vscode.executeDefinitionProvider', uri, position)
 
-      if (!definitions || definitions.length === 0) return null
+      if (!definitions || definitions.length === 0) {return null}
 
       const definition = definitions[0]
       const definitionUri = 'uri' in definition ? definition.uri : definition.targetUri

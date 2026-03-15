@@ -1,8 +1,7 @@
 ---
 name: Kimi-Competitor
 description: Kimi K2.5 Coding Plan 选手 - 参加创新大赛
-model: kimi-k2.5-coding-plan
-tools: ['*']
+model: Kimi-K2.5 (Thinking) (Coding Plan) (gcmp.dashscope)
 user-invocable: false
 ---
 
@@ -17,6 +16,7 @@ user-invocable: false
 ## 项目背景
 
 这是一个 VS Code 扩展，用于查询 Context7 API 获取文档。主要功能：
+
 - Command palette 搜索文档
 - Sidebar 面板展示结果
 - 代码片段显示

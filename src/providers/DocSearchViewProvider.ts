@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import { Context7Client } from '../api/context7'
 import { LibraryService, type LibraryInfo } from '../services/LibraryService'
-import { SearchService, type SearchResult } from '../services/SearchService'
+import { SearchService } from '../services/SearchService'
 import { LibraryDetector } from '../utils/libraryDetector'
 import {
   createLibrarySeparatorItem,
@@ -43,7 +43,7 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
 
   public resolveWebviewView(
     webviewView: vscode.WebviewView,
-    context: vscode.WebviewViewResolveContext,
+    _context: vscode.WebviewViewResolveContext,
     _token: vscode.CancellationToken,
   ) {
     this._view = webviewView
@@ -163,7 +163,9 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
         },
       )
 
-      if (!choice) return undefined
+      if (!choice) {
+        return undefined
+      }
 
       if (choice.id === '__search__') {
         return await this._libraryService.searchAndAddLibrary(searchName, true)
@@ -224,7 +226,9 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
       placeHolder: 'Select a library',
     })
 
-    if (!selected) return undefined
+    if (!selected) {
+      return undefined
+    }
 
     if (selected.libraryId === '__search__') {
       return await this._libraryService.searchAndAddLibrary(undefined, true)
@@ -318,7 +322,9 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
         return
       }
 
-      if (!item.isUser) return
+      if (!item.isUser) {
+        return
+      }
 
       if (event.button.tooltip === 'Remove') {
         const confirm = await vscode.window.showWarningMessage(
@@ -346,7 +352,9 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
       const selected = quickPick.selectedItems[0]
       quickPick.hide()
 
-      if (!selected) return
+      if (!selected) {
+        return
+      }
 
       // 搜索新库
       if (selected.libraryId === '__search__') {

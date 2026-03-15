@@ -1,9 +1,26 @@
 {
   "name": "context7-docs",
   "displayName": "Context7 Docs",
-  "description": "Query documentation using Context7 API",
-  "version": "0.0.1",
+  "description": "Query documentation using Context7 API - Search library docs, code snippets, and examples directly in VS Code",
+  "version": "0.1.0",
   "publisher": "your-publisher-id",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/context7-docs-vscode"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/context7-docs-vscode/issues"
+  },
+  "homepage": "https://github.com/your-username/context7-docs-vscode#readme",
+  "keywords": [
+    "documentation",
+    "search",
+    "context7",
+    "code snippets",
+    "library docs",
+    "api docs"
+  ],
   "engines": {
     "vscode": "^1.101.0"
   },
@@ -91,18 +108,23 @@
     "vscode:prepublish": "pnpm build",
     "build": "vite build",
     "watch": "vite build --watch",
-    "lint": "eslint src --ext ts,tsx",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^22.13.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@types/vscode": "^1.101.0",
     "@vitejs/plugin-react": "^4.3.4",
     "eslint": "^9.20.0",
+    "globals": "^17.4.0",
     "typescript": "^5.7.0",
+    "typescript-eslint": "^8.57.0",
     "vite": "^6.2.0",
     "vitest": "^4.1.0"
   },

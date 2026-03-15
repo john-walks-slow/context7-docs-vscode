@@ -39,7 +39,7 @@ interface LibrarySearchResponse {
 }
 
 // MCP JSON-RPC 响应类型
-interface McpResponse<T> {
+interface McpResponse {
   jsonrpc: '2.0'
   id: number
   result?: {
@@ -54,29 +54,12 @@ interface McpResponse<T> {
   }
 }
 
-// MCP 返回的库搜索结果
-interface McpLibraryResult {
-  id: string
-  name: string
-  description: string
-  totalSnippets: number
-  trustScore: number
-  benchmarkScore: number
-  versions: string[]
-}
-
-// MCP 返回的文档结果
-interface McpDocResult {
-  codeSnippets: CodeSnippet[]
-  infoSnippets: InfoSnippet[]
-}
-
 // ==================== 类型守卫 ====================
 
 /**
  * 判断是否为有效的 MCP 响应
  */
-export function isMcpResponse(value: unknown): value is McpResponse<unknown> {
+export function isMcpResponse(value: unknown): value is McpResponse {
   return (
     typeof value === 'object' &&
     value !== null &&
@@ -391,7 +374,9 @@ export class Context7Client {
     const sections = text.split(/\n---+\n/)
 
     for (const section of sections) {
-      if (!section.trim()) continue
+      if (!section.trim()) {
+        continue
+      }
 
       // 提取所有代码块
       const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g
@@ -410,7 +395,7 @@ export class Context7Client {
       const title = titleMatch ? titleMatch[1].trim() : 'Documentation'
 
       // 移除代码块和标题后的内容作为描述
-      let description = section
+      const description = section
         .replace(codeBlockRegex, '')
         .replace(/^#\s+.+$/m, '')
         .trim()

@@ -63,5 +63,5 @@ export function createMockSecretStorage() {
     }),
     onDidChange: vi.fn(() => ({ dispose: vi.fn() })),
     keys: vi.fn(() => Array.from(store.keys())),
-  I'm ready to help you modify your code. Please share the existing code and indicate where you'd like the selected code to go using `$SELECTION_PLACEHOLDER$`. Let me know what modifications you'd like to make.
+  } as any
 }

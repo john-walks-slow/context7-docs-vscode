@@ -16,4 +16,4 @@ node_modules/
 *.log
 
 .learning
-examples
+examples.worktrees/

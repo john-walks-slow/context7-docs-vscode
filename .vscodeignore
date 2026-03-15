@@ -1,9 +1,33 @@
-node_modules
-.vscode
-.vscode-test
-src
-.gitignore
-eslintrc.json
-**/*.map
+# Source files
+src/
 **/*.ts
-!dist/**/*.ts
+!dist/**/*.d.ts
+
+# Build artifacts
+**/*.map
+
+# Development files
+.vscode/
+.vscode-test/
+.git/
+.gitignore
+.eslintrc.json
+eslint.config.js
+
+# Config files
+tsconfig.json
+vite.config.ts
+vitest.config.ts
+
+# Tests
+tests/
+
+# Dependencies
+node_modules/
+
+# Misc
+.env
+*.log
+*.vsix
+.learning
+examples/
