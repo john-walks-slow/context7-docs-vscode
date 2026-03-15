@@ -31,12 +31,13 @@ describe('languagePaths', () => {
       )
 
       it.each(languages)('should extract scoped package (%s)', (lang) => {
+        // @types/react 应该返回 react（去除 @types/ 前缀）
         expect(
           extractLibraryFromPath(
             '/project/node_modules/@types/react/index.d.ts',
             lang,
           ),
-        ).toBe('@types/react')
+        ).toBe('react')
         expect(
           extractLibraryFromPath(
             '/project/node_modules/@babel/core/index.js',
@@ -52,12 +53,13 @@ describe('languagePaths', () => {
             lang,
           ),
         ).toBe('lodash')
+        // @types/react 应该返回 react（去除 @types/ 前缀）
         expect(
           extractLibraryFromPath(
             '/project/node_modules/.pnpm/@types+react@18.2.0/node_modules/@types/react/index.d.ts',
             lang,
           ),
-        ).toBe('@types/react')
+        ).toBe('react')
       })
 
       it.each(languages)('should extract from yarn cache (%s)', (lang) => {

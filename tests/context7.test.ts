@@ -196,7 +196,10 @@ It contains multiple lines of text.`
       const result = client.parseMcpDocsResult(text)
 
       expect(result.infoSnippets).toHaveLength(1)
-      expect(result.infoSnippets[0].content).toContain('Overview')
+      // 标题存在 breadcrumb 中
+      expect(result.infoSnippets[0].breadcrumb).toBe('Overview')
+      // content 不包含标题
+      expect(result.infoSnippets[0].content).not.toContain('# Overview')
       expect(result.infoSnippets[0].content).toContain(
         'documentation section without code',
       )
@@ -276,6 +279,77 @@ x = 1
 
       expect(result.codeSnippets.length).toBe(2)
       expect(result.infoSnippets.length).toBe(1)
+    })
+
+    it('should parse Source URL from code snippet', () => {
+      const text = `### Middleware Authentication Example
+
+Source: https://github.com/vercel/next.js/blob/canary/docs/middleware.mdx
+
+\`\`\`typescript
+export function middleware(request: NextRequest) {
+  return NextResponse.next()
+}
+\`\`\``
+
+      const result = client.parseMcpDocsResult(text)
+
+      expect(result.codeSnippets).toHaveLength(1)
+      expect(result.codeSnippets[0].codeTitle).toBe(
+        'Middleware Authentication Example',
+      )
+      expect(result.codeSnippets[0].codeId).toBe(
+        'https://github.com/vercel/next.js/blob/canary/docs/middleware.mdx',
+      )
+      // 描述应不含 Source（单独显示为链接）
+      expect(result.codeSnippets[0].codeDescription).not.toContain('Source:')
+    })
+
+    it('should parse Source URL from info snippet', () => {
+      const text = `### Overview
+Source: https://github.com/facebook/react/blob/main/docs/hooks.md
+
+This is a documentation section without code.`
+
+      const result = client.parseMcpDocsResult(text)
+
+      expect(result.infoSnippets).toHaveLength(1)
+      expect(result.infoSnippets[0].pageId).toBe(
+        'https://github.com/facebook/react/blob/main/docs/hooks.md',
+      )
+      // 标题存在 breadcrumb 中
+      expect(result.infoSnippets[0].breadcrumb).toBe('Overview')
+      // Info 内容不含标题和 Source
+      expect(result.infoSnippets[0].content).not.toContain('### Overview')
+      expect(result.infoSnippets[0].content).not.toContain('Source:')
+      expect(result.infoSnippets[0].content).toContain(
+        'This is a documentation section without code.',
+      )
+    })
+
+    it('should handle sections without Source URL', () => {
+      const text = `# No Source
+\`\`\`javascript
+const x = 1;
+\`\`\``
+
+      const result = client.parseMcpDocsResult(text)
+
+      expect(result.codeSnippets).toHaveLength(1)
+      expect(result.codeSnippets[0].codeId).toBeUndefined()
+    })
+
+    it('should parse ### level headings', () => {
+      const text = `### Triple Hash Title
+
+\`\`\`typescript
+const x = 1;
+\`\`\``
+
+      const result = client.parseMcpDocsResult(text)
+
+      expect(result.codeSnippets).toHaveLength(1)
+      expect(result.codeSnippets[0].codeTitle).toBe('Triple Hash Title')
     })
   })
 })

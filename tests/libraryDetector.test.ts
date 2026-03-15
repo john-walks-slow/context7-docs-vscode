@@ -29,12 +29,14 @@ interface LibraryDetectorInternal {
   traceDefinition: (
     uri: { fsPath: string },
     position: { line: number; character: number },
-    languageId: string
+    languageId: string,
   ) => Promise<string | null>
 }
 
 // 辅助函数：安全地获取内部方法
-function getInternalMethods(detector: LibraryDetector): LibraryDetectorInternal {
+function getInternalMethods(
+  detector: LibraryDetector,
+): LibraryDetectorInternal {
   return detector as unknown as LibraryDetectorInternal
 }
 
@@ -258,8 +260,10 @@ describe('LibraryDetector', () => {
         'typescript',
       )
 
-      // 结果取决于 extractLibraryFromPath 的实现
-      expect(typeof result === 'string' || result === null).toBe(true)
+      // 结果应该是对象（包含 libraryName 和 definitionPath）或 null
+      expect(
+        result === null || (result && typeof result.libraryName === 'string'),
+      ).toBe(true)
     })
 
     it('should handle Location format', async () => {
@@ -276,7 +280,9 @@ describe('LibraryDetector', () => {
         'typescript',
       )
 
-      expect(typeof result === 'string' || result === null).toBe(true)
+      expect(
+        result === null || (result && typeof result.libraryName === 'string'),
+      ).toBe(true)
     })
   })
 })
