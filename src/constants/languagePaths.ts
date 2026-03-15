@@ -14,10 +14,11 @@ export interface PathPattern {
  * 各语言的依赖路径模式
  *
  * 设计原则：宽松优先，确保能匹配到内容用于搜索，而非精确剔除版本号。
+ * 注意：模式按顺序匹配，越具体的模式应放在越前面。
  */
 export const PATH_PATTERNS: PathPattern[] = [
   // Node.js/JavaScript/TypeScript/Vue
-  // 一个正则通杀 npm/yarn1/pnpm/yarn-cache：贪婪匹配到最后一个 node_modules/
+  // 注意：@types/ 模式必须放在前面，优先匹配
   {
     languages: [
       'javascript',
@@ -26,6 +27,18 @@ export const PATH_PATTERNS: PathPattern[] = [
       'typescriptreact',
       'vue',
     ],
+    // @types/xxx → 捕获 xxx（去掉 @types/ 前缀）
+    pattern: /.*node_modules\/@types\/([^/]+)/,
+  },
+  {
+    languages: [
+      'javascript',
+      'typescript',
+      'javascriptreact',
+      'typescriptreact',
+      'vue',
+    ],
+    // 其他情况：@scope/package 或 package
     pattern: /.*node_modules\/(@[^/]+\/[^/]+|[^/]+)/,
   },
 
