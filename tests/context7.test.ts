@@ -399,18 +399,23 @@ Some content here.`
 
       const result = client.parseMcpDocsResult(text)
 
-      // APIDOC 内容应该被正确提取，嵌套的代码块应该被正确识别
-      expect(result.codeSnippets.length).toBeGreaterThan(0)
-      
-      // 检查嵌套的 ts 代码块被正确提取
-      const codeSnippet = result.codeSnippets[0]
-      expect(codeSnippet.codeList.length).toBeGreaterThan(0)
-      
-      // 检查 description 不包含 APIDOC 标记
-      expect(codeSnippet.codeDescription).not.toContain('APIDOC')
-      
-      // 检查嵌套代码被正确提取
-      expect(codeSnippet.codeList.some(b => b.language === 'ts')).toBe(true)
+      // APIDOC 块作为 info 片段处理，保留完整的文档流
+      // 内部的嵌套代码块会被 markdown 渲染器正确显示
+      expect(result.infoSnippets.length).toBeGreaterThan(0)
+
+      const infoSnippet = result.infoSnippets.find((s) =>
+        s.breadcrumb.includes('vi.mock'),
+      )
+      expect(infoSnippet).toBeDefined()
+
+      // 内容应该包含完整的 markdown 文档（包括嵌套代码块）
+      expect(infoSnippet!.content).toContain('## vi.mock()')
+      expect(infoSnippet!.content).toContain('```ts')
+      expect(infoSnippet!.content).toContain('function mock')
+      expect(infoSnippet!.content).toContain("import { vi } from 'vitest'")
+
+      // 不应该包含 APIDOC 标记
+      expect(infoSnippet!.content).not.toContain('APIDOC')
     })
   })
 })
