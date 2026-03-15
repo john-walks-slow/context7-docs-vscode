@@ -57,8 +57,8 @@ export function buildHtml(options: HtmlOptions): string {
   <script>
     const vscode = acquireVsCodeApi();
 
-    // 从 localStorage 恢复 wrap 状态
-    const savedWrapMode = localStorage.getItem('context7-wrap-mode') === 'true';
+    // 从 localStorage 恢复 wrap 状态（默认启用）
+    const savedWrapMode = localStorage.getItem('context7-wrap-mode') !== 'false';
     
     let state = {
       results: [],
