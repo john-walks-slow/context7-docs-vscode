@@ -5,7 +5,7 @@
 [![VS Code](https://img.shields.io/badge/VS%20Code-1.101+-blue.svg)](https://code.visualstudio.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Query documentation using Context7 API directly in VS Code. Search library docs, code snippets, and examples.
+Search library documentations, code snippets, and examples directly in VS Code, using Context7.
 
 ![alt text](resources/screenshot.png)
 
@@ -29,7 +29,7 @@ Query documentation using Context7 API directly in VS Code. Search library docs,
 
 **Via Sidebar:**
 
-- Open the Context7 panel in the sidebar (book icon)
+- Open the Context7 panel in the sidebar
 - Select a library or search for one
 - Enter your query
 
@@ -37,17 +37,17 @@ Query documentation using Context7 API directly in VS Code. Search library docs,
 
 The library detector supports:
 
-| Language                      | Package Manager / Path         |
-| ----------------------------- | ------------------------------ |
-| JavaScript / TypeScript / Vue | npm, yarn, pnpm, Yarn PnP      |
-| Python                        | pip, poetry, conda, virtualenv |
-| Go                            | Go Modules                     |
-| Rust                          | Cargo                          |
-| Java                          | Maven, Gradle                  |
-| C#                            | NuGet                          |
-| Ruby                          | rbenv, rvm, chruby             |
-| PHP                           | Composer                       |
-| Dart / Flutter                | pub                            |
+| Language                | Package Manager / Path         |
+| ----------------------- | ------------------------------ |
+| JavaScript / TypeScript | npm, yarn, pnpm, Yarn PnP      |
+| Python                  | pip, poetry, conda, virtualenv |
+| Go                      | Go Modules                     |
+| Rust                    | Cargo                          |
+| Java                    | Maven, Gradle                  |
+| C#                      | NuGet                          |
+| Ruby                    | rbenv, rvm, chruby             |
+| PHP                     | Composer                       |
+| Dart / Flutter          | pub                            |
 
 ## Commands
 

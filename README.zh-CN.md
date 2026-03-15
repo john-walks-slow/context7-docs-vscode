@@ -35,17 +35,17 @@
 
 ## 🌍 支持语言（智能识别功能）
 
-| 语言                          | 包管理器 / 路径                |
-| ----------------------------- | ------------------------------ |
-| JavaScript / TypeScript / Vue | npm, yarn, pnpm, Yarn PnP      |
-| Python                        | pip, poetry, conda, virtualenv |
-| Go                            | Go Modules                     |
-| Rust                          | Cargo                          |
-| Java                          | Maven, Gradle                  |
-| C#                            | NuGet                          |
-| Ruby                          | rbenv, rvm, chruby             |
-| PHP                           | Composer                       |
-| Dart / Flutter                | pub                            |
+| 语言                    | 包管理器 / 路径                |
+| ----------------------- | ------------------------------ |
+| JavaScript / TypeScript | npm, yarn, pnpm, Yarn PnP      |
+| Python                  | pip, poetry, conda, virtualenv |
+| Go                      | Go Modules                     |
+| Rust                    | Cargo                          |
+| Java                    | Maven, Gradle                  |
+| C#                      | NuGet                          |
+| Ruby                    | rbenv, rvm, chruby             |
+| PHP                     | Composer                       |
+| Dart / Flutter          | pub                            |
 
 ## 📋 命令
 
