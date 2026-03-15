@@ -2,9 +2,10 @@
   "name": "context7-docs",
   "displayName": "Context7 Docs (For Human)",
   "description": "Context7 for Humans - Search library docs, code snippets, and examples directly in VS Code",
-  "version": "0.1.1",
+  "version": "0.1.11",
   "publisher": "JohnnRen",
   "license": "MIT",
+  "icon": "resources/icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/john-walks-slow/context7-docs-vscode"
@@ -97,21 +98,12 @@
     "views": {
       "context7": [
         {
+          "icon": "resources/icon-sidebar.svg",
           "type": "webview",
           "id": "context7.search",
           "name": "Documentation Search"
         }
       ]
-    },
-    "configuration": {
-      "title": "Context7",
-      "properties": {
-        "context7.apiKey": {
-          "type": "string",
-          "default": "",
-          "description": "Context7 API Key (已弃用：请使用命令 'Context7: Configure API Key' 安全存储)"
-        }
-      }
     }
   },
   "scripts": {
@@ -135,6 +127,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "eslint": "^9.20.0",
     "globals": "^17.4.0",
+    "sharp": "^0.34.5",
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.57.0",
     "vite": "^6.2.0",
