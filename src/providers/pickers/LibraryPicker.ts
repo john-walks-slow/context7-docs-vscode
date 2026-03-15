@@ -5,6 +5,9 @@ import {
   type UserLibraryQuickPickItem,
 } from '../../types'
 
+/** 动态搜索项的 ID */
+const SEARCH_INPUT_ITEM_ID = '__search_input__'
+
 /**
  * 库选择器
  * 负责处理库的选择、搜索和添加
@@ -54,45 +57,102 @@ export class LibraryPicker {
 
   /**
    * 从列表中选择库（返回库信息）
+   * 支持：输入非匹配文本时自动搜索、ESC 返回上一级
    */
   async pickLibraryFromList(): Promise<LibraryInfo | undefined> {
-    const items: UserLibraryQuickPickItem[] = []
+    const libraries = this._libraryService.getSortedLibraries()
+    const libraryItems: UserLibraryQuickPickItem[] = libraries.map((lib) => ({
+      label: lib.name,
+      description: lib.id,
+      libraryId: lib.id,
+      libraryName: lib.name,
+      isUser: true,
+    }))
 
-    // 所有库（统一展示）
-    for (const lib of this._libraryService.getSortedLibraries()) {
+    const quickPick = vscode.window.createQuickPick<UserLibraryQuickPickItem>()
+
+    // 初始项：库列表 + 分隔线 + 操作
+    const buildItems = (filter: string): UserLibraryQuickPickItem[] => {
+      const items: UserLibraryQuickPickItem[] = []
+
+      // 过滤库
+      const filtered = filter
+        ? libraryItems.filter(
+            (item) =>
+              item.label.toLowerCase().includes(filter.toLowerCase()) ||
+              item.description?.toLowerCase().includes(filter.toLowerCase()),
+          )
+        : libraryItems
+
+      items.push(...filtered)
+
+      // 分隔线和操作
+      items.push(createLibrarySeparatorItem())
+
+      if (filter) {
+        // 有输入时，提供"搜索 [输入]"选项
+        items.push({
+          label: `$(search) Search "${filter}" in Context7...`,
+          description: 'Resolve library ID and add',
+          libraryId: SEARCH_INPUT_ITEM_ID,
+          libraryName: filter,
+          isUser: false,
+        })
+      }
+
       items.push({
-        label: lib.name,
-        description: lib.id,
-        libraryId: lib.id,
-        libraryName: lib.name,
-        isUser: true,
+        label: '$(search) Search library...',
+        description: 'Search by name and add to list',
+        libraryId: '__search__',
+        libraryName: '',
+        isUser: false,
       })
+
+      return items
     }
 
-    // 操作
-    items.push(createLibrarySeparatorItem())
+    quickPick.items = buildItems('')
+    quickPick.placeholder = 'Select a library or type to search'
 
-    items.push({
-      label: 'Search library...',
-      description: 'Search by name and add to list',
-      libraryId: '__search__',
-      libraryName: '',
-      isUser: false,
+    // 动态更新项列表
+    quickPick.onDidChangeValue((value) => {
+      quickPick.items = buildItems(value)
     })
 
-    const selected = await vscode.window.showQuickPick(items, {
-      placeHolder: 'Select a library',
+    return new Promise((resolve) => {
+      quickPick.onDidAccept(() => {
+        const selected = quickPick.activeItems[0]
+        quickPick.hide()
+
+        if (!selected) {
+          resolve(undefined)
+          return
+        }
+
+        if (selected.libraryId === SEARCH_INPUT_ITEM_ID) {
+          // 直接使用输入文本搜索
+          this._libraryService
+            .searchAndAddLibrary(selected.libraryName, true)
+            .then(resolve)
+          return
+        }
+
+        if (selected.libraryId === '__search__') {
+          this._libraryService
+            .searchAndAddLibrary(undefined, true)
+            .then(resolve)
+          return
+        }
+
+        resolve({ id: selected.libraryId, name: selected.libraryName })
+      })
+
+      quickPick.onDidHide(() => {
+        resolve(undefined)
+      })
+
+      quickPick.show()
     })
-
-    if (!selected) {
-      return undefined
-    }
-
-    if (selected.libraryId === '__search__') {
-      return await this._libraryService.searchAndAddLibrary(undefined, true)
-    }
-
-    return { id: selected.libraryId, name: selected.libraryName }
   }
 
   /**
@@ -104,52 +164,83 @@ export class LibraryPicker {
     action: 'search' | 'manage',
     onSearch?: (libraryId: string, libraryName: string) => Promise<void>,
   ): Promise<void> {
-    const items: UserLibraryQuickPickItem[] = []
-
-    // 所有库（统一展示，都可以编辑和删除）
-    for (const lib of this._libraryService.getSortedLibraries()) {
-      items.push({
-        label: lib.name,
-        description: lib.id,
-        libraryId: lib.id,
-        libraryName: lib.name,
-        isUser: true,
-        buttons: [
-          {
-            iconPath: new vscode.ThemeIcon('globe'),
-            tooltip: 'Open in Context7',
-          },
-          { iconPath: new vscode.ThemeIcon('edit'), tooltip: 'Edit ID' },
-          { iconPath: new vscode.ThemeIcon('trash'), tooltip: 'Remove' },
-        ],
-      })
-    }
-
-    // 分隔线和操作
-    items.push(createLibrarySeparatorItem())
-
-    items.push({
-      label: 'Search library...',
-      description: 'Search by name and add to list',
-      libraryId: '__search__',
-      libraryName: '',
-      isUser: false,
-    })
-
-    items.push({
-      label: 'Add library by ID...',
-      description: 'Enter ID directly (e.g., /facebook/react)',
-      libraryId: '__addById__',
-      libraryName: '',
-      isUser: false,
-    })
+    const libraries = this._libraryService.getSortedLibraries()
+    const libraryItems: UserLibraryQuickPickItem[] = libraries.map((lib) => ({
+      label: lib.name,
+      description: lib.id,
+      libraryId: lib.id,
+      libraryName: lib.name,
+      isUser: true,
+      buttons: [
+        {
+          iconPath: new vscode.ThemeIcon('globe'),
+          tooltip: 'Open in Context7',
+        },
+        { iconPath: new vscode.ThemeIcon('edit'), tooltip: 'Edit ID' },
+        { iconPath: new vscode.ThemeIcon('trash'), tooltip: 'Remove' },
+      ],
+    }))
 
     const quickPick = vscode.window.createQuickPick<UserLibraryQuickPickItem>()
-    quickPick.items = items
+
+    // 构建项列表
+    const buildItems = (filter: string): UserLibraryQuickPickItem[] => {
+      const items: UserLibraryQuickPickItem[] = []
+
+      // 过滤库
+      const filtered = filter
+        ? libraryItems.filter(
+            (item) =>
+              item.label.toLowerCase().includes(filter.toLowerCase()) ||
+              item.description?.toLowerCase().includes(filter.toLowerCase()),
+          )
+        : libraryItems
+
+      items.push(...filtered)
+
+      // 分隔线和操作
+      items.push(createLibrarySeparatorItem())
+
+      if (filter) {
+        // 有输入时，提供"搜索 [输入]"选项
+        items.push({
+          label: `$(search) Search "${filter}" in Context7...`,
+          description: 'Resolve library ID and add',
+          libraryId: SEARCH_INPUT_ITEM_ID,
+          libraryName: filter,
+          isUser: false,
+        })
+      }
+
+      items.push({
+        label: '$(search) Search library...',
+        description: 'Search by name and add to list',
+        libraryId: '__search__',
+        libraryName: '',
+        isUser: false,
+      })
+
+      items.push({
+        label: '$(add) Add library by ID...',
+        description: 'Enter ID directly (e.g., /facebook/react)',
+        libraryId: '__addById__',
+        libraryName: '',
+        isUser: false,
+      })
+
+      return items
+    }
+
+    quickPick.items = buildItems('')
     quickPick.placeholder =
       action === 'search'
-        ? 'Choose a library to search its documentation'
-        : 'Select a library to manage'
+        ? 'Choose a library or type to search'
+        : 'Select a library to manage or type to search'
+
+    // 动态更新项列表
+    quickPick.onDidChangeValue((value) => {
+      quickPick.items = buildItems(value)
+    })
 
     // 处理按钮点击
     quickPick.onDidTriggerItemButton(async (event) => {
@@ -173,6 +264,13 @@ export class LibraryPicker {
         )
         if (confirm === 'Remove') {
           await this._libraryService.removeUserLibrary(item.libraryId)
+          // 刷新列表
+          const idx = quickPick.items.findIndex(
+            (i) => i.libraryId === item.libraryId,
+          )
+          if (idx !== -1) {
+            quickPick.items = quickPick.items.filter((_, i) => i !== idx)
+          }
         }
       } else if (event.button.tooltip === 'Edit ID') {
         const newId = await vscode.window.showInputBox({
@@ -184,18 +282,29 @@ export class LibraryPicker {
           await this._libraryService.editUserLibrary(item.libraryName, newId)
         }
       }
-      quickPick.hide()
     })
 
     quickPick.onDidAccept(async () => {
-      const selected = quickPick.selectedItems[0]
+      const selected = quickPick.activeItems[0]
       quickPick.hide()
 
       if (!selected) {
         return
       }
 
-      // 搜索新库（不在这里弹出输入框，由调用方处理）
+      // 直接使用输入文本搜索
+      if (selected.libraryId === SEARCH_INPUT_ITEM_ID) {
+        const result = await this._libraryService.searchAndAddLibrary(
+          selected.libraryName,
+          action === 'search',
+        )
+        if (result && action === 'search' && onSearch) {
+          await onSearch(result.id, result.name)
+        }
+        return
+      }
+
+      // 搜索新库
       if (selected.libraryId === '__search__') {
         const result = await this._libraryService.searchAndAddLibrary(
           undefined,
@@ -207,7 +316,7 @@ export class LibraryPicker {
         return
       }
 
-      // 通过 ID 添加（不在这里弹出输入框，由调用方处理）
+      // 通过 ID 添加
       if (selected.libraryId === '__addById__') {
         const result = await this._libraryService.addLibraryById(
           action === 'search',
@@ -218,7 +327,7 @@ export class LibraryPicker {
         return
       }
 
-      // 选择了已有的库（不在这里弹出输入框，由调用方处理）
+      // 选择了已有的库
       if (action === 'search' && onSearch) {
         await onSearch(selected.libraryId, selected.libraryName)
       } else {

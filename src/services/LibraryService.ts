@@ -146,51 +146,84 @@ export class LibraryService {
     presetName?: string,
     continueSearch: boolean = false,
   ): Promise<LibraryInfo | undefined> {
-    const name = await vscode.window.showInputBox({
-      prompt: 'Enter library name',
-      placeHolder: 'e.g., axios, lodash',
-      value: presetName ?? '',
-    })
+    let currentName = presetName ?? ''
 
-    if (!name) {
-      return undefined
-    }
+    // 循环支持 ESC 返回上一级
+    while (true) {
+      const name = await vscode.window.showInputBox({
+        prompt: 'Enter library name (ESC to go back)',
+        placeHolder: 'e.g., axios, lodash',
+        value: currentName,
+      })
 
-    try {
-      const results = await vscode.window.withProgress(
-        {
-          location: vscode.ProgressLocation.Notification,
-          title: `Searching "${name}"...`,
-          cancellable: false,
-        },
-        async () => {
-          return await this._client.searchLibraries(name)
-        },
-      )
-
-      if (!results || results.length === 0) {
-        vscode.window.showErrorMessage(`Could not find library "${name}"`)
+      if (!name) {
+        // ESC 或空输入，退出循环
         return undefined
       }
 
-      interface LibraryPickItem extends vscode.QuickPickItem {
-        libraryId: string
-        libraryTitle: string
-      }
+      currentName = name
 
-      const items: LibraryPickItem[] = results.map((r) => ({
-        label: r.title,
-        description: r.id,
-        detail: `${r.totalSnippets} snippets · Score: ${r.benchmarkScore}`,
-        libraryId: r.id,
-        libraryTitle: r.title,
-      }))
+      try {
+        const results = await vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title: `Searching "${name}"...`,
+            cancellable: false,
+          },
+          async () => {
+            return await this._client.searchLibraries(name)
+          },
+        )
 
-      const selected = await vscode.window.showQuickPick(items, {
-        placeHolder: `Found ${results.length} result${results.length > 1 ? 's' : ''}. Select to add.`,
-      })
+        if (!results || results.length === 0) {
+          const retry = await vscode.window.showErrorMessage(
+            `Could not find library "${name}"`,
+            'Try Again',
+            'Cancel',
+          )
+          if (retry === 'Try Again') {
+            continue // 返回输入框
+          }
+          return undefined
+        }
 
-      if (selected) {
+        interface LibraryPickItem extends vscode.QuickPickItem {
+          libraryId: string
+          libraryTitle: string
+          isBack?: boolean
+        }
+
+        const items: LibraryPickItem[] = [
+          {
+            label: '$(arrow-left) Back to search',
+            description: 'Search with a different name',
+            libraryId: '__back__',
+            libraryTitle: '',
+            isBack: true,
+          },
+          ...results.map((r) => ({
+            label: r.title,
+            description: r.id,
+            detail: `${r.totalSnippets} snippets · Score: ${r.benchmarkScore}`,
+            libraryId: r.id,
+            libraryTitle: r.title,
+          })),
+        ]
+
+        const selected = await vscode.window.showQuickPick(items, {
+          placeHolder: `Found ${results.length} result${results.length > 1 ? 's' : ''}. Select to add.`,
+        })
+
+        if (!selected) {
+          // ESC，返回上一级
+          continue
+        }
+
+        if (selected.isBack) {
+          // 选择"返回"，继续循环
+          continue
+        }
+
         await this.addUserLibrary(
           selected.libraryId,
           selected.libraryTitle.toLowerCase(),
@@ -205,13 +238,19 @@ export class LibraryService {
             name: selected.libraryTitle.toLowerCase(),
           }
         }
+        return undefined
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error'
+        const retry = await vscode.window.showErrorMessage(
+          `Search failed: ${message}`,
+          'Try Again',
+          'Cancel',
+        )
+        if (retry === 'Try Again') {
+          continue
+        }
+        return undefined
       }
-
-      return undefined
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error'
-      vscode.window.showErrorMessage(`Search failed: ${message}`)
-      return undefined
     }
   }
 

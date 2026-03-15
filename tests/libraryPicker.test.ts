@@ -19,6 +19,7 @@ vi.mock('vscode', () => ({
       const handlers: Record<string, Function[]> = {}
       const quickPick = {
         items: [] as any[],
+        activeItems: [] as any[],
         selectedItems: [] as any[],
         placeholder: '',
         visible: false,
@@ -33,7 +34,16 @@ vi.mock('vscode', () => ({
           handlers.onDidAccept.push(fn)
           return { dispose: vi.fn() }
         }),
-        onDidHide: vi.fn(() => ({ dispose: vi.fn() })),
+        onDidChangeValue: vi.fn((fn: Function) => {
+          handlers.onDidChangeValue = handlers.onDidChangeValue || []
+          handlers.onDidChangeValue.push(fn)
+          return { dispose: vi.fn() }
+        }),
+        onDidHide: vi.fn((fn: Function) => {
+          handlers.onDidHide = handlers.onDidHide || []
+          handlers.onDidHide.push(fn)
+          return { dispose: vi.fn() }
+        }),
         show: vi.fn(() => {
           quickPick.visible = true
         }),
@@ -44,8 +54,19 @@ vi.mock('vscode', () => ({
         // 测试辅助方法
         _handlers: handlers,
         _selectItem: async (item: any) => {
+          quickPick.activeItems = [item]
           quickPick.selectedItems = [item]
           for (const fn of handlers.onDidAccept || []) {
+            await fn()
+          }
+        },
+        _changeValue: async (value: string) => {
+          for (const fn of handlers.onDidChangeValue || []) {
+            await fn(value)
+          }
+        },
+        _hide: async () => {
+          for (const fn of handlers.onDidHide || []) {
             await fn()
           }
         },
@@ -309,6 +330,74 @@ describe('LibraryPicker', () => {
     })
   })
 
+  describe('selectLibrary - 动态搜索', () => {
+    it('输入非匹配文本时显示动态搜索项', async () => {
+      const promise = libraryPicker.selectLibrary('search')
+      const qp = currentQuickPick
+
+      await qp._changeValue('unknown-lib')
+
+      const dynamicSearch = qp.items.find(
+        (i: any) => i.libraryId === '__search_input__',
+      )
+      expect(dynamicSearch).toBeTruthy()
+      expect(dynamicSearch.label).toContain('unknown-lib')
+
+      await qp._hide()
+      await promise
+    })
+
+    it('选择动态搜索项调用 searchAndAddLibrary', async () => {
+      const onSearch = vi.fn()
+      const mockResult: LibraryInfo = { id: '/test/lib', name: 'lib' }
+      vi.mocked(mockLibraryService.searchAndAddLibrary).mockResolvedValue(
+        mockResult,
+      )
+
+      const promise = libraryPicker.selectLibrary('search', onSearch)
+      const qp = currentQuickPick
+
+      await qp._changeValue('test-lib')
+
+      const dynamicSearch = qp.items.find(
+        (i: any) => i.libraryId === '__search_input__',
+      )
+      await qp._selectItem(dynamicSearch)
+      await promise
+
+      expect(mockLibraryService.searchAndAddLibrary).toHaveBeenCalledWith(
+        'test-lib',
+        true,
+      )
+      expect(onSearch).toHaveBeenCalledWith('/test/lib', 'lib')
+    })
+
+    it('过滤显示匹配的库', async () => {
+      const promise = libraryPicker.selectLibrary('search')
+      const qp = currentQuickPick
+
+      await qp._changeValue('react')
+
+      // 应该只显示 react
+      const libraryItems = qp.items.filter(
+        (i: any) =>
+          i.isUser ||
+          i.libraryId === '__search_input__' ||
+          i.libraryId === '__search__' ||
+          i.libraryId === '__addById__',
+      )
+      expect(
+        libraryItems.some((i: any) => i.libraryId === '/facebook/react'),
+      ).toBe(true)
+      expect(libraryItems.some((i: any) => i.libraryId === '/vuejs/vue')).toBe(
+        false,
+      )
+
+      await qp._hide()
+      await promise
+    })
+  })
+
   describe('selectLibraryForSearch', () => {
     it('检测到库名时显示两个选项', async () => {
       const mockResult: LibraryInfo = { id: '/lodash/lodash', name: 'lodash' }
@@ -344,31 +433,89 @@ describe('LibraryPicker', () => {
 
   describe('pickLibraryFromList', () => {
     it('包含预设库、用户库和操作项', async () => {
-      vi.mocked(vscode.window.showQuickPick).mockResolvedValue({
-        label: 'react',
-        libraryId: '/facebook/react',
-        libraryName: 'react',
-      } as any)
+      const promise = libraryPicker.pickLibraryFromList()
+      const qp = currentQuickPick
 
-      await libraryPicker.pickLibraryFromList()
+      expect(
+        qp.items.find((i: any) => i.libraryId === '/facebook/react'),
+      ).toBeTruthy()
+      expect(
+        qp.items.find((i: any) => i.libraryId === '/axios/axios'),
+      ).toBeTruthy()
+      expect(
+        qp.items.find((i: any) => i.libraryId === '__search__'),
+      ).toBeTruthy()
 
-      const items = vi.mocked(vscode.window.showQuickPick).mock
-        .calls[0][0] as any[]
-      expect(items.find((i) => i.libraryId === '/facebook/react')).toBeTruthy()
-      expect(items.find((i) => i.libraryId === '/axios/axios')).toBeTruthy()
-      expect(items.find((i) => i.libraryId === '__search__')).toBeTruthy()
+      // 清理
+      await qp._hide()
+      await promise
     })
 
     it('选择已有库返回库信息', async () => {
-      vi.mocked(vscode.window.showQuickPick).mockResolvedValue({
-        label: 'react',
-        libraryId: '/facebook/react',
-        libraryName: 'react',
-      } as any)
+      const promise = libraryPicker.pickLibraryFromList()
+      const qp = currentQuickPick
 
-      const result = await libraryPicker.pickLibraryFromList()
+      const reactItem = qp.items.find(
+        (i: any) => i.libraryId === '/facebook/react',
+      )
+      await qp._selectItem(reactItem)
+      const result = await promise
 
       expect(result).toEqual({ id: '/facebook/react', name: 'react' })
+    })
+
+    it('输入非匹配文本时显示动态搜索项', async () => {
+      const promise = libraryPicker.pickLibraryFromList()
+      const qp = currentQuickPick
+
+      // 模拟输入
+      await qp._changeValue('unknown-lib')
+
+      // 应该有动态搜索项
+      const dynamicSearch = qp.items.find(
+        (i: any) => i.libraryId === '__search_input__',
+      )
+      expect(dynamicSearch).toBeTruthy()
+      expect(dynamicSearch.label).toContain('unknown-lib')
+
+      // 清理
+      await qp._hide()
+      await promise
+    })
+
+    it('选择动态搜索项调用 searchAndAddLibrary', async () => {
+      const mockResult: LibraryInfo = { id: '/test/lib', name: 'lib' }
+      vi.mocked(mockLibraryService.searchAndAddLibrary).mockResolvedValue(
+        mockResult,
+      )
+
+      const promise = libraryPicker.pickLibraryFromList()
+      const qp = currentQuickPick
+
+      // 模拟输入
+      await qp._changeValue('test-lib')
+
+      const dynamicSearch = qp.items.find(
+        (i: any) => i.libraryId === '__search_input__',
+      )
+      await qp._selectItem(dynamicSearch)
+      const result = await promise
+
+      expect(mockLibraryService.searchAndAddLibrary).toHaveBeenCalledWith(
+        'test-lib',
+        true,
+      )
+      expect(result).toEqual(mockResult)
+    })
+
+    it('ESC 时返回 undefined', async () => {
+      const promise = libraryPicker.pickLibraryFromList()
+      const qp = currentQuickPick
+
+      await qp._hide()
+      const result = await promise
+
+      expect(result).toBeUndefined()
     })
   })
 })
