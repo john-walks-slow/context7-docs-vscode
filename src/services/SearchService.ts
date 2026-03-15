@@ -188,7 +188,7 @@ export class SearchService {
   }
 
   /**
-   * 插入代码到当前编辑器
+   * 插入代码到当前编辑器（智能缩进）
    */
   public async insertCode(code: string): Promise<void> {
     const editor = vscode.window.activeTextEditor
@@ -196,9 +196,61 @@ export class SearchService {
       vscode.window.showWarningMessage('No active editor')
       return
     }
+
+    const position = editor.selection.active
+    const document = editor.document
+
+    // 获取当前行的缩进
+    const currentLine = document.lineAt(position.line)
+    const currentIndent = currentLine.text.match(/^(\s*)/)?.[1] || ''
+
+    // 智能调整代码缩进
+    const adjustedCode = this._adjustCodeIndent(code, currentIndent)
+
     await editor.edit((editBuilder) => {
-      editBuilder.insert(editor.selection.active, code)
+      editBuilder.insert(position, adjustedCode)
     })
+
+    // 插入后自动格式化选中的代码
+    const endPosition = document.positionAt(
+      document.offsetAt(position) + adjustedCode.length,
+    )
+    editor.selection = new vscode.Selection(position, endPosition)
+    await vscode.commands.executeCommand('editor.action.formatSelection')
+    editor.selection = new vscode.Selection(endPosition, endPosition)
+  }
+
+  /**
+   * 智能调整代码缩进
+   */
+  private _adjustCodeIndent(code: string, baseIndent: string): string {
+    const lines = code.split('\n')
+    if (lines.length === 0) return code
+
+    // 单行代码：直接添加基础缩进
+    if (lines.length === 1) {
+      return baseIndent + lines[0]
+    }
+
+    // 多行代码：检测最小公共缩进
+    let minIndent = Infinity
+    for (let i = 0; i < lines.length; i++) {
+      // 跳过空行
+      if (lines[i].trim().length === 0) continue
+      const indent = lines[i].match(/^(\s*)/)?.[1]?.length ?? 0
+      minIndent = Math.min(minIndent, indent)
+    }
+
+    // 移除原有缩进，添加新缩进
+    const indentToRemove = minIndent === Infinity ? 0 : minIndent
+    return lines
+      .map((line, index) => {
+        if (line.trim().length === 0) return line
+        // 第一行不加额外缩进
+        if (index === 0) return line.slice(indentToRemove)
+        return baseIndent + line.slice(indentToRemove)
+      })
+      .join('\n')
   }
 
   /**
