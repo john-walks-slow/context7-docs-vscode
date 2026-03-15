@@ -1,4 +1,6 @@
-# Context7 Docs - VS Code 扩展
+# Context7 Docs (For Human)
+
+[English](README.md) | [中文](README.zh-CN.md)
 
 [![VS Code](https://img.shields.io/badge/VS%20Code-1.101+-blue.svg)](https://code.visualstudio.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -9,34 +11,29 @@
 
 ## ✨ 特性
 
-- 🔍 **智能库检测** - 通过 LSP 自动识别代码所属库
-- 📚 **库管理** - 添加、编辑、删除自定义库
-- 🎨 **语法高亮** - 使用 Shiki 渲染代码
-- 🔐 **安全存储** - API Key 使用 VS Code SecretStorage
-- ⚡ **结果缓存** - 5 分钟缓存，加速重复搜索
-- 🌐 **匿名访问** - 无需 API Key 也可通过 MCP 使用
+- **开箱即用** - 无需任何配置即可使用（通过 MCP 匿名访问）
+- **智能库检测** - 通过 LSP 自动识别代码所属库
+- **历史记录** - 自动记录查询历史
+- **语法高亮** - 渲染代码块和 markdown
+- **安全存储** - 使用 VS Code SecretStorage 安全存储 API Key
+- **结果缓存** - 缓存加速重复搜索
+- **库管理** - 添加、编辑、删除自定义库
 
 ## 🚀 快速开始
-
-### 安装
-
-从 VS Code 扩展市场安装，或手动安装 `.vsix` 文件。
-
-### 使用
-
-**侧边栏搜索：**
-
-- 打开侧边栏的 Context7 面板（书本图标）
-- 选择或搜索库
-- 输入查询内容
 
 **选中搜索：**
 
 - 选中代码
 - 右键 → "Context7: Search Selection"
-- 扩展自动识别库并搜索
+- 自动识别代码所属库，获取相关文档
 
-## 🌍 支持语言
+**使用命令面板：**
+
+- 使用 `Context7: Search Documentation` 命令
+- 选择要查询文档的库
+- 输入查询内容
+
+## 🌍 支持语言（智能识别功能）
 
 | 语言                          | 包管理器 / 路径                |
 | ----------------------------- | ------------------------------ |

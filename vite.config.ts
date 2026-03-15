@@ -20,4 +20,7 @@ export default defineConfig({
     sourcemap: true,
     minify: false,
   },
+  test: {
+    exclude: ['**/node_modules/**', '**/dist/**', '**/.worktrees/**'],
+  },
 })

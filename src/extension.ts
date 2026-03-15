@@ -56,13 +56,6 @@ export function activate(context: vscode.ExtensionContext) {
       viewProvider.showHistory()
     }),
   )
-
-  // 注册查看收藏命令
-  context.subscriptions.push(
-    vscode.commands.registerCommand('context7.viewBookmarks', () => {
-      viewProvider.showBookmarks()
-    }),
-  )
 }
 
 export function deactivate() {}

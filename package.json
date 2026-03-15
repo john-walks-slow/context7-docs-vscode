@@ -1,7 +1,7 @@
 {
   "name": "context7-docs",
-  "displayName": "Context7 Docs",
-  "description": "Query documentation using Context7 API - Search library docs, code snippets, and examples directly in VS Code",
+  "displayName": "Context7 Docs (For Human)",
+  "description": "Search library docs, code snippets, and examples directly in VS Code",
   "version": "0.1.0",
   "publisher": "john-walks-slow",
   "license": "MIT",
@@ -57,11 +57,6 @@
         "command": "context7.viewHistory",
         "title": "Context7: View Search History",
         "icon": "$(history)"
-      },
-      {
-        "command": "context7.viewBookmarks",
-        "title": "Context7: View Bookmarks",
-        "icon": "$(star)"
       }
     ],
     "menus": {
@@ -84,14 +79,9 @@
           "group": "navigation@2"
         },
         {
-          "command": "context7.viewBookmarks",
-          "when": "view == context7.search",
-          "group": "navigation@3"
-        },
-        {
           "command": "context7.manageLibraries",
           "when": "view == context7.search",
-          "group": "navigation@4"
+          "group": "navigation@3"
         }
       ]
     },
@@ -100,7 +90,7 @@
         {
           "id": "context7",
           "title": "Context7 Docs",
-          "icon": "resources/icon.svg"
+          "icon": "resources/icon-sidebar.svg"
         }
       ]
     },
@@ -132,7 +122,9 @@
     "lint:fix": "eslint src --fix",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "pack:vsix": "vsce package --no-dependencies",
+    "publish:vsix": "vsce publish --no-dependencies"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

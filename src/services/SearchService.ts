@@ -13,6 +13,9 @@ export interface SearchResult {
   code?: string
   language?: string
   highlightedCode?: string
+  sourceUrl?: string // 源文档/代码 URL
+  pageTitle?: string // 页面标题（仅代码片段有）
+  tokens?: number // token 数量
 }
 
 /**
@@ -41,19 +44,43 @@ export class SearchService {
     libraryId: string,
     query: string,
   ): Promise<SearchResult[]> {
+    const normalizedQuery = query.toLowerCase().trim()
+    const cacheKey = `${libraryId}:${normalizedQuery}`
+
+    console.log('[SearchService] search called:', {
+      libraryId,
+      query,
+      normalizedQuery,
+      cacheKey,
+      cacheSize: this._cache.size,
+    })
+
     // 检查缓存
     const cached = this._cache.get(libraryId, query)
     if (cached) {
+      console.log('[SearchService] ✓ Cache HIT for:', cacheKey)
+      vscode.window.showInformationMessage(
+        `✓ Loaded from cache (${cached.length} results)`,
+      )
       this._lastResults = cached
       return cached
     }
 
+    console.log('[SearchService] ✗ Cache MISS, calling API...')
     // 执行搜索
     const response = await client.searchWithLibraryId(libraryId, query)
+    console.log('[SearchService] API response received, transforming...')
     const results = await this.transformResults(response)
+    console.log('[SearchService] Transformed results:', results.length)
 
     // 存入缓存
     this._cache.set(libraryId, query, results)
+    console.log(
+      '[SearchService] ✓ Cached results for:',
+      cacheKey,
+      'Total cache size:',
+      this._cache.size,
+    )
     this._lastResults = results
     return results
   }
@@ -73,6 +100,25 @@ export class SearchService {
   }
 
   /**
+   * 强制重新搜索（忽略缓存）
+   * 先删除缓存，再执行搜索
+   */
+  public async forceSearch(
+    client: Context7Client,
+    libraryId: string,
+    query: string,
+  ): Promise<SearchResult[]> {
+    console.log('[SearchService] forceSearch called, clearing cache:', {
+      libraryId,
+      query,
+    })
+    // 清除特定搜索的缓存
+    this._cache.delete(libraryId, query)
+    // 重新搜索
+    return this.search(client, libraryId, query)
+  }
+
+  /**
    * 获取当前主题
    */
   public getCurrentTheme(): string {
@@ -83,7 +129,9 @@ export class SearchService {
    * 初始化 Shiki 高亮器
    */
   public async initHighlighter(): Promise<void> {
-    if (this._highlighter) {return}
+    if (this._highlighter) {
+      return
+    }
 
     this._highlighter = await createHighlighter({
       themes: ['github-dark', 'github-light', 'vitesse-dark', 'vitesse-light'],
@@ -133,13 +181,24 @@ export class SearchService {
    * 检测代码语言
    */
   public detectLanguage(code: string): string {
-    if (code.includes('import React') || code.includes('useState')) {return 'tsx'}
-    if (code.includes('interface ') || code.includes(': string'))
-      {return 'typescript'}
-    if (code.includes('def ') || code.includes('import ')) {return 'python'}
-    if (code.includes('func ') || code.includes('package ')) {return 'go'}
-    if (code.includes('fn ') || code.includes('let mut')) {return 'rust'}
-    if (code.includes('class ') && code.includes('{')) {return 'javascript'}
+    if (code.includes('import React') || code.includes('useState')) {
+      return 'tsx'
+    }
+    if (code.includes('interface ') || code.includes(': string')) {
+      return 'typescript'
+    }
+    if (code.includes('def ') || code.includes('import ')) {
+      return 'python'
+    }
+    if (code.includes('func ') || code.includes('package ')) {
+      return 'go'
+    }
+    if (code.includes('fn ') || code.includes('let mut')) {
+      return 'rust'
+    }
+    if (code.includes('class ') && code.includes('{')) {
+      return 'javascript'
+    }
     return 'text'
   }
 
@@ -149,6 +208,13 @@ export class SearchService {
   public async transformResults(
     response: Context7Response,
   ): Promise<SearchResult[]> {
+    console.log('[SearchService] transformResults called, response:', {
+      hasCodeSnippets: !!response?.codeSnippets,
+      hasInfoSnippets: !!response?.infoSnippets,
+      codeCount: response?.codeSnippets?.length || 0,
+      infoCount: response?.infoSnippets?.length || 0,
+    })
+
     const results: SearchResult[] = []
 
     // 处理信息片段（放在前面）
@@ -158,6 +224,8 @@ export class SearchService {
           type: 'info',
           title: info.breadcrumb || 'Documentation',
           content: info.content || '',
+          sourceUrl: info.pageId, // 源文档 URL
+          tokens: info.contentTokens,
         })
       }
     }
@@ -179,6 +247,9 @@ export class SearchService {
             code,
             language,
             highlightedCode,
+            sourceUrl: snippet.codeId, // 源代码 URL
+            pageTitle: snippet.pageTitle,
+            tokens: snippet.codeTokens,
           })
         }
       }

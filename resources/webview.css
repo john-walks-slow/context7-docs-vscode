@@ -16,11 +16,42 @@ body {
 }
 
 /* Tabs */
-.tabs {
+.tabs-container {
   display: flex;
   border-bottom: 1px solid var(--vscode-editorWidget-border);
-  padding: 0 8px;
   background: var(--vscode-editorWidget-background);
+  align-items: center;
+}
+
+.tabs {
+  display: flex;
+  flex: 1;
+  padding: 0 8px;
+}
+
+.refresh-btn {
+  background: transparent;
+  border: none;
+  color: var(--vscode-descriptionForeground);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 8px 12px;
+  transition: all 0.15s;
+  border-radius: 4px;
+}
+
+.refresh-btn:hover {
+  color: var(--vscode-editor-foreground);
+  background: var(--vscode-toolbar-hoverBackground);
+}
+
+.refresh-btn:active {
+  transform: scale(0.95);
+}
+
+.refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .tab {
@@ -71,10 +102,6 @@ body {
   border: 1px solid var(--vscode-editorWidget-border);
   border-radius: 6px;
   margin-bottom: 8px;
-}
-
-.result-item:hover {
-  background: var(--vscode-list-hoverBackground);
 }
 
 .result-item .header {
@@ -133,18 +160,6 @@ body {
 
 .code-block code {
   background: transparent !important;
-}
-
-/* 移除潜在的 selection/highlight 效果 */
-.code-block::selection,
-.code-block *::selection {
-  background: transparent !important;
-}
-
-.code-block mark,
-.code-block .highlight {
-  background: transparent !important;
-  color: inherit !important;
 }
 
 /* Language Tag */
@@ -237,28 +252,117 @@ body {
   color: var(--vscode-descriptionForeground);
 }
 
-/* Actions */
-.actions {
+/* Result Footer */
+.result-footer {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--vscode-editorWidget-border);
 }
 
-.actions button {
-  padding: 4px 12px;
-  font-size: 11px;
-  background: var(--vscode-button-secondaryBackground);
-  color: var(--vscode-button-secondaryForeground);
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
+.result-footer .meta {
   display: flex;
   align-items: center;
   gap: 4px;
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.result-footer .meta a {
+  color: var(--vscode-textLink-foreground);
+  text-decoration: none;
+}
+
+.result-footer .meta a:hover {
+  text-decoration: underline;
+}
+
+.result-footer .page-title {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 1;
+}
+
+.result-footer .actions {
+  flex-shrink: 0;
+}
+
+/* Actions - 现代图标按钮 */
+.actions {
+  display: flex;
+  gap: 4px;
+}
+
+.actions button {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  color: var(--vscode-descriptionForeground);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.actions button svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  fill: none;
 }
 
 .actions button:hover {
-  background: var(--vscode-button-secondaryHoverBackground);
+  background: var(--vscode-toolbar-hoverBackground);
+  color: var(--vscode-editor-foreground);
+  border-color: var(--vscode-editorWidget-border);
+  transform: translateY(-1px);
+}
+
+.actions button:active {
+  transform: translateY(0);
+}
+
+.actions button.copied {
+  color: var(--vscode-terminal-ansiGreen);
+}
+
+/* Tooltip */
+.actions button::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 8px;
+  background: var(--vscode-editorWidget-background);
+  color: var(--vscode-editor-foreground);
+  font-size: 11px;
+  font-weight: 400;
+  white-space: nowrap;
+  border-radius: 4px;
+  border: 1px solid var(--vscode-editorWidget-border);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.actions button:hover::after {
+  opacity: 1;
 }
 
 /* Empty State */
@@ -275,40 +379,72 @@ body {
 }
 
 .empty-state .icon {
-  font-size: 48px;
-  margin-bottom: 12px;
-  opacity: 0.5;
+  color: var(--vscode-textLink-foreground);
+  margin-bottom: 16px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.empty-state:hover .icon {
+  opacity: 0.8;
+}
+
+.empty-state .title {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: var(--vscode-editor-foreground);
 }
 
 .empty-state .hint {
-  font-size: 11px;
-  margin-top: 8px;
+  font-size: 12px;
+  margin-top: 4px;
   opacity: 0.7;
+  line-height: 1.5;
 }
 
-/* Loading */
+/* Loading - 磁性方块动画 */
 .loading {
-  text-align: center;
-  padding: 20px;
-  color: var(--vscode-descriptionForeground);
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
 }
 
-.loading::after {
-  content: '';
-  animation: dots 1.5s infinite;
+.loading span {
+  width: 6px;
+  height: 6px;
+  background: var(--vscode-textLink-foreground);
+  border-radius: 2px;
+  animation: magnetic 1.2s ease-in-out infinite;
 }
 
-@keyframes dots {
+.loading span:nth-child(1) {
+  animation-delay: 0s;
+}
+.loading span:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.loading span:nth-child(3) {
+  animation-delay: 0.2s;
+}
+.loading span:nth-child(4) {
+  animation-delay: 0.3s;
+}
+.loading span:nth-child(5) {
+  animation-delay: 0.4s;
+}
+
+@keyframes magnetic {
   0%,
-  20% {
-    content: '.';
-  }
-  40% {
-    content: '..';
-  }
-  60%,
   100% {
-    content: '...';
+    transform: translateX(-8px) scale(0.6);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translateX(8px) scale(1);
+    opacity: 1;
   }
 }
 
@@ -333,4 +469,76 @@ body {
 
 .theme-light .code-block .shiki {
   background: var(--code-bg-light) !important;
+}
+
+/* Result Footer */
+.result-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--vscode-editorWidget-border);
+}
+
+.result-footer .meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.result-footer .actions {
+  margin-top: 0;
+}
+
+/* Source Link */
+.source-link {
+  font-size: 11px;
+  color: var(--vscode-textLink-foreground);
+  text-decoration: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: var(--vscode-editorWidget-background);
+  transition: all 0.15s;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: 0;
+}
+
+.source-link svg {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+}
+
+.source-link .source-text {
+  display: inline;
+}
+
+/* 当空间紧张时（同时有 pageTitle 和 actions）隐藏 Source 文字 */
+.result-footer:has(.page-title):has(.actions) .source-link {
+  padding: 6px;
+}
+
+.result-footer:has(.page-title):has(.actions) .source-link .source-text {
+  display: none;
+}
+
+.source-link:hover {
+  background: var(--vscode-toolbar-hoverBackground);
+  text-decoration: none;
+}
+
+/* Page Title */
+.page-title {
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--vscode-editorWidget-background);
 }

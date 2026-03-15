@@ -7,6 +7,9 @@ interface CodeSnippet {
   codeTitle: string
   codeDescription: string
   codeLanguage: string
+  codeTokens?: number
+  codeId?: string // 源代码 URL
+  pageTitle?: string
   codeList: Array<{
     language: string
     code: string
@@ -14,14 +17,16 @@ interface CodeSnippet {
 }
 
 interface InfoSnippet {
-  pageId: string
+  pageId: string // 源文档 URL
   breadcrumb: string
   content: string
+  contentTokens?: number
 }
 
 export interface Context7Response {
   codeSnippets: CodeSnippet[]
   infoSnippets: InfoSnippet[]
+  rules?: Record<string, unknown> // 库特定的规则和指南
 }
 
 export interface LibrarySearchResult {
@@ -477,7 +482,10 @@ export class Context7Client {
       type: 'json',
     })
 
-    const response = await fetch(`${this.apiUrl}/context?${params}`, {
+    const url = `${this.apiUrl}/context?${params}`
+    console.log('[Context7] API request:', url)
+
+    const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${apiKey}`,
       },
@@ -485,10 +493,19 @@ export class Context7Client {
 
     if (!response.ok) {
       const error = await response.text()
+      console.error('[Context7] API error:', response.status, error)
       throw new Error(`Context7 API error: ${error}`)
     }
 
-    return response.json()
+    const data = await response.json()
+    console.log('[Context7] API response type:', typeof data)
+    console.log('[Context7] API response keys:', Object.keys(data || {}))
+    console.log(
+      '[Context7] API response sample:',
+      JSON.stringify(data).substring(0, 500),
+    )
+
+    return data
   }
 
   // ==================== 公共方法（自动选择模式） ====================

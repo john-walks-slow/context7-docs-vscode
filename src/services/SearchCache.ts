@@ -17,9 +17,9 @@ export class SearchCache {
   private readonly ttl: number
 
   /**
-   * @param ttl 缓存过期时间（毫秒），默认 5 分钟
+   * @param ttl 缓存过期时间（毫秒），默认 30 分钟
    */
-  constructor(ttl: number = 5 * 60 * 1000) {
+  constructor(ttl: number = 30 * 60 * 1000) {
     this.ttl = ttl
   }
 
@@ -38,7 +38,9 @@ export class SearchCache {
     const key = this.getKey(libraryId, query)
     const entry = this.cache.get(key)
 
-    if (!entry) {return null}
+    if (!entry) {
+      return null
+    }
 
     // 检查是否过期
     if (Date.now() - entry.timestamp > this.ttl) {
@@ -65,6 +67,14 @@ export class SearchCache {
    */
   clear(): void {
     this.cache.clear()
+  }
+
+  /**
+   * 删除特定搜索的缓存
+   */
+  delete(libraryId: string, query: string): boolean {
+    const key = this.getKey(libraryId, query)
+    return this.cache.delete(key)
   }
 
   /**
