@@ -99,6 +99,26 @@ export class LibraryService {
   }
 
   /**
+   * 根据 ID 查找库
+   */
+  public findLibraryById(id: string): LibraryInfo | undefined {
+    // 查预设库
+    const presetMatch = COMMON_LIBRARIES.find((lib) => lib.id === id)
+    if (presetMatch) {
+      return { id: presetMatch.id, name: presetMatch.name }
+    }
+
+    // 查用户库
+    const userLibraries = this.getUserLibraries()
+    const userMatch = userLibraries.find((lib) => lib.id === id)
+    if (userMatch) {
+      return { id: userMatch.id, name: userMatch.name }
+    }
+
+    return undefined
+  }
+
+  /**
    * 获取所有预设库（按字母排序）
    */
   public getSortedPresets(): LibraryItem[] {

@@ -1,0 +1,36 @@
+// SCSS 示例
+@use "sass:math";
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+@use "bootstrap/scss/bootstrap";
+@use "~@fortawesome/fontawesome-free/scss/fontawesome";
+@import "~animate.css/animate";
+
+// 测试选中这些标识符来检测库
+$primary-color: #3490dc;
+$secondary-color: #ffed4a;
+
+.btn-primary {
+  @apply bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded;
+  
+  &:hover {
+    animation: fadeIn 0.5s;
+  }
+}
+
+.card {
+  @extend .card-body;
+  box-shadow: $shadow;
+  
+  @include media-breakpoint-up(md) {
+    padding: math.div($spacer, 2);
+  }
+}
+
+// Tailwind 自定义
+@layer components {
+  .btn {
+    @apply py-2 px-4 rounded;
+  }
+}

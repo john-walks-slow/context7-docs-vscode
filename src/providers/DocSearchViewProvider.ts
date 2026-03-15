@@ -1,7 +1,9 @@
 import * as vscode from 'vscode'
 import { Context7Client } from '../api/context7'
 import { LibraryService, type LibraryInfo } from '../services/LibraryService'
-import { SearchService } from '../services/SearchService'
+import { SearchService, type SearchResult } from '../services/SearchService'
+import { HistoryService, type SearchHistoryItem } from '../services/HistoryService'
+import { BookmarkService, type BookmarkItem } from '../services/BookmarkService'
 import { LibraryDetector } from '../utils/libraryDetector'
 import {
   createLibrarySeparatorItem,
@@ -20,13 +22,20 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
   private readonly _context: vscode.ExtensionContext
   private readonly _libraryService: LibraryService
   private readonly _searchService: SearchService
+  private readonly _historyService: HistoryService
+  private readonly _bookmarkService: BookmarkService
   private _currentTheme: string = 'dark'
+  private _currentLibraryId?: string
+  private _currentLibraryName?: string
+  private _currentQuery?: string
 
   constructor(context: vscode.ExtensionContext, client: Context7Client) {
     this._context = context
     this._client = client
     this._libraryService = new LibraryService(context, this._client)
     this._searchService = new SearchService()
+    this._historyService = new HistoryService(context)
+    this._bookmarkService = new BookmarkService(context)
 
     // 监听主题变化
     vscode.window.onDidChangeActiveColorTheme((theme) => {
@@ -75,6 +84,35 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
           break
         case 'insertCode':
           await this._searchService.insertCode(message.code)
+          break
+        case 'addToBookmark':
+          await this._handleAddBookmark(message.resultIndex)
+          break
+        case 'viewHistory':
+          await this.showHistory()
+          break
+        case 'viewBookmarks':
+          await this.showBookmarks()
+          break
+        case 'removeHistoryItem':
+          await this._historyService.removeHistoryItem(
+            message.libraryId,
+            message.query,
+          )
+          this._sendHistoryUpdate()
+          break
+        case 'removeBookmark':
+          await this._bookmarkService.removeBookmark(message.id)
+          this._sendBookmarksUpdate()
+          break
+        case 'searchFromHistory':
+          await this._handleSearch(message.libraryId, message.query)
+          break
+        case 'getHistory':
+          this._sendHistoryUpdate()
+          break
+        case 'getBookmarks':
+          this._sendBookmarksUpdate()
           break
       }
     })
@@ -419,6 +457,8 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
       return
     }
 
+    this._currentLibraryId = libraryId
+    this._currentQuery = query
     this._view.webview.postMessage({ command: 'loading' })
 
     try {
@@ -428,13 +468,222 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
         libraryId,
         query,
       )
+
+      // 获取库名称
+      const library = this._libraryService.findLibraryById(libraryId)
+      this._currentLibraryName = library?.name || libraryId
+
+      // 记录搜索历史
+      await this._historyService.addHistory(
+        libraryId,
+        this._currentLibraryName,
+        query,
+      )
+
       this._view.webview.postMessage({ command: 'results', results })
+      this._sendHistoryUpdate()
     } catch (error) {
       this._view.webview.postMessage({
         command: 'error',
         message: error instanceof Error ? error.message : 'Unknown error',
       })
     }
+  }
+
+  /**
+   * 添加收藏
+   */
+  private async _handleAddBookmark(resultIndex: number): Promise<void> {
+    if (!this._currentLibraryId || !this._currentLibraryName || !this._currentQuery) {
+      vscode.window.showWarningMessage('No search context')
+      return
+    }
+
+    const results = this._searchService.getLastResults()
+    const result = results[resultIndex]
+    if (!result) {
+      vscode.window.showWarningMessage('Result not found')
+      return
+    }
+
+    // 获取标签和备注
+    const tagsInput = await vscode.window.showInputBox({
+      prompt: 'Add tags (comma-separated)',
+      placeHolder: 'e.g., hooks, state, tutorial',
+    })
+
+    const note = await vscode.window.showInputBox({
+      prompt: 'Add a note (optional)',
+      placeHolder: 'Description for this bookmark',
+    })
+
+    const tags = tagsInput
+      ? tagsInput.split(',').map((t) => t.trim()).filter(Boolean)
+      : []
+
+    await this._bookmarkService.addBookmark({
+      libraryId: this._currentLibraryId,
+      libraryName: this._currentLibraryName,
+      query: this._currentQuery,
+      title: result.title,
+      content: result.content,
+      code: result.code,
+      language: result.language,
+      tags,
+      note: note || '',
+    })
+
+    vscode.window.showInformationMessage('Added to bookmarks')
+    this._sendBookmarksUpdate()
+  }
+
+  /**
+   * 显示搜索历史
+   */
+  public async showHistory(): Promise<void> {
+    const history = this._historyService.getHistory()
+
+    if (history.length === 0) {
+      vscode.window.showInformationMessage('No search history yet')
+      return
+    }
+
+    const items = history.map((item) => ({
+      label: item.query,
+      description: `${item.libraryName} - ${this._formatTime(item.timestamp)}`,
+      detail: item.libraryId,
+    }))
+
+    const selected = await vscode.window.showQuickPick(items, {
+      placeHolder: 'Search history (click to search again)',
+    })
+
+    if (selected) {
+      await this._handleSearch(selected.detail!, selected.label)
+    }
+  }
+
+  /**
+   * 显示收藏夹
+   */
+  public async showBookmarks(): Promise<void> {
+    const bookmarks = this._bookmarkService.getBookmarks()
+
+    if (bookmarks.length === 0) {
+      vscode.window.showInformationMessage('No bookmarks yet')
+      return
+    }
+
+    const items = bookmarks.map((item) => ({
+      label: item.title,
+      description: `${item.libraryName} - ${this._formatTime(item.timestamp)}`,
+      detail: item.id,
+      buttons: [
+        {
+          iconPath: new vscode.ThemeIcon('trash'),
+          tooltip: 'Remove',
+        },
+      ],
+    }))
+
+    const quickPick = vscode.window.createQuickPick(items[0] ? items : [])
+    quickPick.items = items
+    quickPick.placeholder = 'Bookmarks (click to view)'
+
+    quickPick.onDidTriggerItemButton(async (event) => {
+      const item = event.item as typeof items[0]
+      if (event.button.tooltip === 'Remove') {
+        await this._bookmarkService.removeBookmark(item.detail!)
+        vscode.window.showInformationMessage('Bookmark removed')
+        quickPick.items = quickPick.items.filter((i) => i.detail !== item.detail)
+      }
+    })
+
+    quickPick.onDidAccept(async () => {
+      const selected = quickPick.selectedItems[0] as typeof items[0] | undefined
+      quickPick.hide()
+
+      if (selected) {
+        const bookmark = this._bookmarkService.getBookmarkById(selected.detail!)
+        if (bookmark) {
+          await this._showBookmarkDetail(bookmark)
+        }
+      }
+    })
+
+    quickPick.show()
+  }
+
+  /**
+   * 显示收藏详情
+   */
+  private async _showBookmarkDetail(bookmark: BookmarkItem): Promise<void> {
+    const actions = ['View Code', 'Search Again', 'Cancel']
+
+    if (bookmark.code) {
+      const choice = await vscode.window.showQuickPick(actions, {
+        placeHolder: bookmark.title,
+      })
+
+      if (choice === 'View Code') {
+        const doc = await vscode.workspace.openTextDocument({
+          content: bookmark.code,
+          language: bookmark.language || 'plaintext',
+        })
+        await vscode.window.showTextDocument(doc)
+      } else if (choice === 'Search Again') {
+        await this._handleSearch(bookmark.libraryId, bookmark.query)
+      }
+    } else {
+      const choice = await vscode.window.showQuickPick(['Search Again', 'Cancel'], {
+        placeHolder: bookmark.title,
+      })
+
+      if (choice === 'Search Again') {
+        await this._handleSearch(bookmark.libraryId, bookmark.query)
+      }
+    }
+  }
+
+  /**
+   * 发送历史更新
+   */
+  private _sendHistoryUpdate(): void {
+    if (this._view) {
+      this._view.webview.postMessage({
+        command: 'historyUpdate',
+        history: this._historyService.getHistory().slice(0, 10),
+      })
+    }
+  }
+
+  /**
+   * 发送收藏更新
+   */
+  private _sendBookmarksUpdate(): void {
+    if (this._view) {
+      this._view.webview.postMessage({
+        command: 'bookmarksUpdate',
+        bookmarks: this._bookmarkService.getBookmarks().slice(0, 10),
+      })
+    }
+  }
+
+  /**
+   * 格式化时间
+   */
+  private _formatTime(timestamp: number): string {
+    const now = Date.now()
+    const diff = now - timestamp
+    const minutes = Math.floor(diff / 60000)
+    const hours = Math.floor(diff / 3600000)
+    const days = Math.floor(diff / 86400000)
+
+    if (minutes < 1) return 'Just now'
+    if (minutes < 60) return `${minutes}m ago`
+    if (hours < 24) return `${hours}h ago`
+    if (days < 7) return `${days}d ago`
+    return new Date(timestamp).toLocaleDateString()
   }
 
   /**
@@ -557,6 +806,7 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
               <div class="actions">
                 <button onclick="copyCode(\${globalIndex})">Copy</button>
                 <button onclick="insertCode(\${globalIndex})">Insert</button>
+                <button onclick="addToBookmark(\${globalIndex})" title="Add to bookmarks">⭐</button>
               </div>
             </div>
           \`;
@@ -568,6 +818,9 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
                 <span class="type-badge info">info</span>
               </div>
               <div class="info-content">\${contentHtml}</div>
+              <div class="actions">
+                <button onclick="addToBookmark(\${globalIndex})" title="Add to bookmarks">⭐</button>
+              </div>
             </div>
           \`;
         }
@@ -582,6 +835,10 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
     function insertCode(index) {
       const code = state.results[index]?.code;
       if (code) vscode.postMessage({ command: 'insertCode', code });
+    }
+
+    function addToBookmark(index) {
+      vscode.postMessage({ command: 'addToBookmark', resultIndex: index });
     }
 
     function escapeHtml(text) {
