@@ -3,16 +3,16 @@
   "displayName": "Context7 Docs",
   "description": "Query documentation using Context7 API - Search library docs, code snippets, and examples directly in VS Code",
   "version": "0.1.0",
-  "publisher": "your-publisher-id",
+  "publisher": "john-walks-slow",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/context7-docs-vscode"
+    "url": "https://github.com/john-walks-slow/context7-docs-vscode"
   },
   "bugs": {
-    "url": "https://github.com/your-username/context7-docs-vscode/issues"
+    "url": "https://github.com/john-walks-slow/context7-docs-vscode/issues"
   },
-  "homepage": "https://github.com/your-username/context7-docs-vscode#readme",
+  "homepage": "https://github.com/john-walks-slow/context7-docs-vscode#readme",
   "keywords": [
     "documentation",
     "search",
