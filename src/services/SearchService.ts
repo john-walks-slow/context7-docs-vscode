@@ -1,5 +1,6 @@
 import * as vscode from 'vscode'
 import { createHighlighter, type Highlighter, type BundledTheme } from 'shiki'
+import { marked } from 'marked'
 import { type Context7Response, type Context7Client } from '../api/context7'
 import { SearchCache } from './SearchCache'
 
@@ -10,6 +11,7 @@ export interface SearchResult {
   type: 'code' | 'info'
   title: string
   content: string // 统一使用 content 存储描述/说明文本（Markdown 格式）
+  renderedContent?: string // 渲染后的 HTML（info 片段使用，包含语法高亮的代码块）
   code?: string
   language?: string
   highlightedCode?: string
@@ -190,6 +192,39 @@ export class SearchService {
   }
 
   /**
+   * 渲染 Markdown 内容（包含语法高亮的代码块）
+   */
+  public async renderMarkdownWithHighlight(markdown: string): Promise<string> {
+    if (!markdown) return ''
+
+    const self = this
+    const theme: BundledTheme =
+      this._currentTheme === 'light' ? 'github-light' : 'github-dark'
+
+    // 自定义代码块渲染器，使用 Shiki 高亮
+    const renderer = {
+      code({ text, lang }: { text: string; lang?: string }): string {
+        const language = lang || 'text'
+        try {
+          // 同步调用 Shiki（highlighter 已初始化）
+          const highlighted = self._highlighter?.codeToHtml(text, {
+            lang: language,
+            theme,
+          })
+          return (
+            highlighted || `<pre><code>${self.escapeHtml(text)}</code></pre>`
+          )
+        } catch {
+          return `<pre><code>${self.escapeHtml(text)}</code></pre>`
+        }
+      },
+    }
+
+    marked.use({ renderer })
+    return (await marked.parse(markdown)) as string
+  }
+
+  /**
    * 获取当前编辑器的语言
    */
   private getCurrentEditorLanguage(): string {
@@ -244,7 +279,8 @@ export class SearchService {
         if (snippet.codeList?.length > 0) {
           const code = snippet.codeList[0].code
           // 优先使用 API 提供的语言，否则使用当前编辑器的语言
-          const language = snippet.codeList[0].language || this.getCurrentEditorLanguage()
+          const language =
+            snippet.codeList[0].language || this.getCurrentEditorLanguage()
 
           const highlightedCode = await this.highlightCode(code, language)
 
@@ -261,18 +297,24 @@ export class SearchService {
           })
         }
       }
+    }
 
-      // 处理信息片段
-      if (response.infoSnippets) {
-        for (const info of response.infoSnippets) {
-          results.push({
-            type: 'info',
-            title: info.breadcrumb || 'Documentation',
-            content: info.content || '',
-            sourceUrl: info.pageId, // 源文档 URL
-            tokens: info.contentTokens,
-          })
-        }
+    // 处理信息片段
+    if (response.infoSnippets) {
+      for (const info of response.infoSnippets) {
+        // 渲染 Markdown 并对代码块进行语法高亮
+        const renderedContent = await this.renderMarkdownWithHighlight(
+          info.content || '',
+        )
+
+        results.push({
+          type: 'info',
+          title: info.breadcrumb || 'Documentation',
+          content: info.content || '',
+          renderedContent,
+          sourceUrl: info.pageId, // 源文档 URL
+          tokens: info.contentTokens,
+        })
       }
     }
 

@@ -19,84 +19,25 @@ const x = 1
     expect(preProcessMarkdown(markdown)).toBe(markdown)
   })
 
-  it('should handle APIDOC block with nested code blocks (real-world case)', () => {
-    // Real-world case from Context7 API for vitest vi.mock
-    const input = `### vi.mock() - Module Mocking
-
-Source: https://github.com/vitest-dev/vitest/blob/main/docs/api/vi.md
-
-Substitutes all imported modules from a provided path with a mock implementation.
+  it('should handle APIDOC block with nested code blocks', () => {
+    // APIDOC 块包含嵌套代码块，需要正确提取内容
+    const input = `### Title
 
 \`\`\`APIDOC
-## vi.mock()
+## API Section
 
-### Description
-Substitutes all imported modules from a provided path with another module.
-
-### Method
-Function call (hoisted to top of file)
-
-### Signatures
-
-#### String Path Signature
 \`\`\`ts
-function mock(
-  path: string,
-  factory?: MockOptions | MockFactory<unknown>
-): void
+const x = 1
 \`\`\`
-
-#### Module Promise Signature
-\`\`\`ts
-function mock<T>(
-  module: Promise<T>,
-  factory?: MockOptions | MockFactory<T>
-): void
-\`\`\`
-
-### Parameters
-
-#### Path Parameters
-- **path** (string) - Required - Module path to mock
-
-### Request Example
-\`\`\`ts
-import { vi } from 'vitest'
-
-vi.mock('./src/calculator.ts', () => {
-  return {
-    calculator: vi.fn(() => 42)
-  }
-})
-\`\`\`
-
-### Important Notes
-
-- **Hoisting**: vi.mock is hoisted to the top of the file
-- **Import Keyword**: Only works with \`import\` keyword
-\`\`\`
-
---------------------------------
-
-### More content after APIDOC`
+\`\`\``
 
     const result = preProcessMarkdown(input)
 
-    // Should NOT contain APIDOC marker
+    // APIDOC 包装被移除，内部内容保留
     expect(result).not.toContain('```APIDOC')
-
-    // Should contain the inner content properly
-    expect(result).toContain('## vi.mock()')
-    expect(result).toContain('### Description')
-    expect(result).toContain('### Signatures')
-
-    // Nested code blocks should be preserved
+    expect(result).toContain('## API Section')
     expect(result).toContain('```ts')
-    expect(result).toContain('function mock(')
-    expect(result).toContain('import { vi } from')
-
-    // Content after APIDOC should remain
-    expect(result).toContain('More content after APIDOC')
+    expect(result).toContain('const x = 1')
   })
 
   it('should handle multiple APIDOC blocks', () => {

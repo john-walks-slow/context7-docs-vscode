@@ -120,8 +120,16 @@ export function buildHtml(options: HtmlOptions): string {
       content.innerHTML = filtered.map((r, i) => {
         const globalIndex = state.results.indexOf(r);
 
-        // 统一渲染逻辑：content 都用 marked.parse 渲染 Markdown
-        const contentHtml = r.content ? marked.parse(r.content) : '';
+        // 渲染内容 HTML
+        // - code 片段: description 用 marked.parse 渲染
+        // - info 片段: 使用预渲染的 renderedContent（包含 Shiki 高亮的代码块）
+        let contentHtml = '';
+        if (r.type === 'code') {
+          contentHtml = r.content ? marked.parse(r.content) : '';
+        } else {
+          // info 片段优先使用预渲染的内容
+          contentHtml = r.renderedContent || (r.content ? marked.parse(r.content) : '');
+        }
 
         // 生成源链接 HTML
         const sourceLinkHtml = r.sourceUrl
