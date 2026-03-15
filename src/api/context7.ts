@@ -339,6 +339,64 @@ export class Context7Client {
   }
 
   /**
+   * 提取 APIDOC 代码块内容
+   * APIDOC 是 Context7 的特殊格式，内部包含 markdown 文档和嵌套代码块
+   * 需要正确处理嵌套代码块的配对
+   */
+  private extractApidocContent(text: string): string {
+    let result = text
+    let startIndex = 0
+
+    while (true) {
+      const apidocStart = result.indexOf('```APIDOC', startIndex)
+      if (apidocStart === -1) break
+
+      // 找到 APIDOC 块开始后的第一个换行
+      const contentStart = result.indexOf('\n', apidocStart)
+      if (contentStart === -1) break
+
+      // 从内容开始位置，找到正确配对的结束标记
+      // 需要跟踪嵌套深度，因为 APIDOC 内部可能有嵌套的代码块
+      let depth = 1
+      let searchIndex = contentStart + 1
+      let apidocEnd = -1
+
+      while (searchIndex < result.length) {
+        const nextBackticks = result.indexOf('```', searchIndex)
+        if (nextBackticks === -1) break
+
+        // 检查这是代码块开始还是结束
+        const afterBackticks = result.substring(nextBackticks, nextBackticks + 10)
+        if (afterBackticks.match(/^```\w/)) {
+          // 这是代码块开始（如 ```ts, ```js 等）
+          depth++
+        } else {
+          // 这是代码块结束（单独的 ```）
+          depth--
+          if (depth === 0) {
+            apidocEnd = nextBackticks
+            break
+          }
+        }
+        searchIndex = nextBackticks + 3
+      }
+
+      if (apidocEnd === -1) {
+        // 没找到配对的结束，跳过这个 APIDOC
+        startIndex = contentStart
+        continue
+      }
+
+      // 提取内容并替换 APIDOC 块（保留内部内容）
+      const content = result.substring(contentStart + 1, apidocEnd)
+      result = result.substring(0, apidocStart) + content + result.substring(apidocEnd + 3)
+      startIndex = apidocStart
+    }
+
+    return result
+  }
+
+  /**
    * 解析 MCP 返回的文档结果文本（公开方法用于测试）
    * 格式：
    * # Title
@@ -368,12 +426,17 @@ export class Context7Client {
         continue
       }
 
-      // 提取所有代码块
+      // 预处理：移除 APIDOC 代码块包装（保留内容）
+      // APIDOC 是 Context7 的 API 文档格式，内部包含 markdown 格式的文档
+      // 由于可能包含嵌套代码块，需要正确匹配配对
+      let processedSection = this.extractApidocContent(section)
+
+      // 提取所有代码块（排除 APIDOC 块）
       const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g
       const codeBlocks: Array<{ language: string; code: string }> = []
       let match
 
-      while ((match = codeBlockRegex.exec(section)) !== null) {
+      while ((match = codeBlockRegex.exec(processedSection)) !== null) {
         codeBlocks.push({
           language: match[1] || 'text',
           code: match[2].trim(),
@@ -381,16 +444,16 @@ export class Context7Client {
       }
 
       // 提取标题（第一个 # 或 ### 开头的行）
-      const titleMatch = section.match(/^#{1,3}\s+(.+)$/m)
+      const titleMatch = processedSection.match(/^#{1,3}\s+(.+)$/m)
       const title = titleMatch ? titleMatch[1].trim() : 'Documentation'
 
       // 提取 Source URL
-      const sourceMatch = section.match(/Source:\s*(https?:\/\/[^\s\n]+)/i)
+      const sourceMatch = processedSection.match(/Source:\s*(https?:\/\/[^\s\n]+)/i)
       const sourceUrl = sourceMatch ? sourceMatch[1].trim() : undefined
 
       if (codeBlocks.length > 0) {
         // 代码片段：描述移除标题和 Source
-        const description = section
+        const description = processedSection
           .replace(codeBlockRegex, '')
           .replace(/^#{1,3}\s+.+$/m, '')
           .replace(/Source:\s*https?:\/\/[^\s\n]+/gi, '')
@@ -406,7 +469,7 @@ export class Context7Client {
         })
       } else {
         // Info 片段：同样移除标题和 Source
-        const content = section
+        const content = processedSection
           .replace(/^#{1,3}\s+.+$/m, '')
           .replace(/Source:\s*https?:\/\/[^\s\n]+/gi, '')
           .trim()

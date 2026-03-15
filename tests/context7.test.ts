@@ -351,5 +351,66 @@ const x = 1;
       expect(result.codeSnippets).toHaveLength(1)
       expect(result.codeSnippets[0].codeTitle).toBe('Triple Hash Title')
     })
+
+    it('should handle APIDOC blocks with nested code blocks (real-world case)', () => {
+      // Real-world case from Context7 API for vitest vi.mock
+      const text = `### vi.mock() - Module Mocking
+
+Source: https://github.com/vitest-dev/vitest/blob/main/docs/api/vi.md
+
+Substitutes all imported modules from a provided path with a mock implementation.
+
+\`\`\`APIDOC
+## vi.mock()
+
+### Description
+Substitutes all imported modules from a provided path with another module.
+
+### Signatures
+
+#### String Path Signature
+\`\`\`ts
+function mock(
+  path: string,
+  factory?: MockOptions
+): void
+\`\`\`
+
+### Parameters
+
+- **path** (string) - Required - Module path to mock
+
+### Request Example
+\`\`\`ts
+import { vi } from 'vitest'
+
+vi.mock('./src/calculator.ts', () => {
+  return {
+    calculator: vi.fn(() => 42)
+  }
+})
+\`\`\`
+\`\`\`
+
+---
+### Another Section
+
+Some content here.`
+
+      const result = client.parseMcpDocsResult(text)
+
+      // APIDOC 内容应该被正确提取，嵌套的代码块应该被正确识别
+      expect(result.codeSnippets.length).toBeGreaterThan(0)
+      
+      // 检查嵌套的 ts 代码块被正确提取
+      const codeSnippet = result.codeSnippets[0]
+      expect(codeSnippet.codeList.length).toBeGreaterThan(0)
+      
+      // 检查 description 不包含 APIDOC 标记
+      expect(codeSnippet.codeDescription).not.toContain('APIDOC')
+      
+      // 检查嵌套代码被正确提取
+      expect(codeSnippet.codeList.some(b => b.language === 'ts')).toBe(true)
+    })
   })
 })

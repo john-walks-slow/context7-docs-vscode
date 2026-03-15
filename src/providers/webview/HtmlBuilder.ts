@@ -121,7 +121,7 @@ export function buildHtml(options: HtmlOptions): string {
         const globalIndex = state.results.indexOf(r);
 
         // 统一渲染逻辑：content 都用 marked.parse 渲染 Markdown
-        const contentHtml = r.content ? marked.parse(preProcessMarkdown(r.content)) : '';
+        const contentHtml = r.content ? marked.parse(r.content) : '';
 
         // 生成源链接 HTML
         const sourceLinkHtml = r.sourceUrl
@@ -199,21 +199,6 @@ export function buildHtml(options: HtmlOptions): string {
     function escapeHtml(text) {
       if (!text) return '';
       return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    }
-
-    /**
-     * 预处理 Markdown，处理 Context7 API 返回的特殊格式
-     * 主要解决 APIDOC 代码块内嵌套代码块导致的解析问题
-     */
-    function preProcessMarkdown(markdown) {
-      if (!markdown) return markdown;
-      
-      // 处理 APIDOC 代码块：将其内容转为普通 markdown
-      // APIDOC 是 Context7 的 API 文档格式，内部包含 markdown 格式的文档
-      return markdown.replace(/\`\`\`APIDOC\\n([\\s\\S]*?)\`\`\`/g, (match, content) => {
-        // 移除开头的 APIDOC 标记，保留内容作为普通 markdown
-        return content;
-      });
     }
 
     window.addEventListener('message', event => {
