@@ -58,6 +58,38 @@ The library detector supports:
 | `Context7: Search Selection`     | Search docs for code under cursor  |
 | `Context7: Configure API Key`    | Set or update API key              |
 
+## Configuration
+
+Customize via VS Code settings (`settings.json`):
+
+### Libraries
+
+```json
+{
+  "context7.libraries": [
+    { "id": "/websites/react_dev", "name": "react" },
+    { "id": "/vuejs/vue", "name": "vue" }
+  ]
+}
+```
+
+### Path Patterns
+
+Add custom patterns to extract library names from file paths:
+
+```json
+{
+  "context7.pathPatterns": [
+    {
+      "languages": ["javascript", "typescript"],
+      "pattern": "my-monorepo/packages/([^/]+)"
+    }
+  ]
+}
+```
+
+User patterns are matched **before** defaults, allowing you to override behavior for specific project structures.
+
 ### Access Modes
 
 |            | Anonymous (Default) | API Key                                                             |

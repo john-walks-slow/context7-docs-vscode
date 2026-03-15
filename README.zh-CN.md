@@ -56,6 +56,38 @@
 | `Context7: Search Selection`     | 智能搜索（自动识别库） |
 | `Context7: Configure API Key`    | 设置 API Key（可选）   |
 
+## ⚙️ 配置
+
+通过 VS Code 设置（`settings.json`）自定义：
+
+### 库列表
+
+```json
+{
+  "context7.libraries": [
+    { "id": "/websites/react_dev", "name": "react" },
+    { "id": "/vuejs/vue", "name": "vue" }
+  ]
+}
+```
+
+### 路径模式
+
+添加自定义模式从文件路径提取库名：
+
+```json
+{
+  "context7.pathPatterns": [
+    {
+      "languages": ["javascript", "typescript"],
+      "pattern": "my-monorepo/packages/([^/]+)"
+    }
+  ]
+}
+```
+
+用户模式会**优先于**默认模式匹配，可为特定项目结构自定义行为。
+
 ## 🔑 访问模式
 
 |          | 匿名（默认） | API Key                                                              |
