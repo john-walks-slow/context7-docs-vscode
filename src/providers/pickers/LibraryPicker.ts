@@ -273,7 +273,7 @@ export class LibraryPicker {
           'Cancel',
         )
         if (confirm === 'Remove') {
-          await this._libraryService.removeUserLibrary(item.libraryId)
+          await this._libraryService.removeLibrary(item.libraryId)
           // 刷新列表
           const idx = quickPick.items.findIndex(
             (i) => i.libraryId === item.libraryId,
@@ -289,7 +289,7 @@ export class LibraryPicker {
           placeHolder: '/owner/repo',
         })
         if (newId && newId !== item.libraryId) {
-          await this._libraryService.editUserLibrary(item.libraryName, newId)
+          await this._libraryService.editLibrary(item.libraryName, newId)
         }
       }
     })

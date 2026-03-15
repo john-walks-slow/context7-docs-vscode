@@ -187,7 +187,7 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
         if (results && results.length > 0) {
           const resolved = results[0]
           // 添加到用户库
-          await this._libraryService.addUserLibrary(resolved.id, resolved.title)
+          await this._libraryService.addLibrary(resolved.id, resolved.title)
           await this._handleSearch(resolved.id, selectedText)
           return
         }

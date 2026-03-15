@@ -1,5 +1,9 @@
 /**
- * 常用库列表，用于快速选择
+ * 推荐库列表
+ * 用于智能推荐服务，基于当前文件语言推荐相关库
+ *
+ * 注意：这是推荐列表，不是默认库。
+ * 默认库通过 VS Code 设置项 context7.defaultLibraries 配置
  */
 export interface LibraryItem {
   id: string

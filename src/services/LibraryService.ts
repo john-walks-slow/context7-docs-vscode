@@ -1,14 +1,12 @@
 import * as vscode from 'vscode'
 import { Context7Client } from '../api/context7'
-import { COMMON_LIBRARIES } from '../constants/libraries'
 
 /**
- * 用户库数据结构
+ * 库数据结构
  */
-export interface UserLibrary {
+export interface Library {
   id: string
   name: string
-  addedAt: number
 }
 
 /**
@@ -21,96 +19,65 @@ export interface LibraryInfo {
 
 /**
  * 库管理服务
- * 负责库的增删改查和持久化
+ * 负责库的增删改查
  *
- * 设计原则：预设库仅在初始化时合并到用户库，之后所有操作都基于用户库
+ * 设计原则：
+ * - 用户库直接存储在 VS Code 设置项 context7.libraries
+ * - 预设库是设置项的默认值（在 package.json 中定义）
+ * - 所有操作直接修改设置项
  */
 export class LibraryService {
-  private readonly _context: vscode.ExtensionContext
   private readonly _client: Context7Client
-  private readonly INIT_KEY = 'userLibrariesInitialized'
 
-  constructor(context: vscode.ExtensionContext, client: Context7Client) {
-    this._context = context
+  constructor(_context: vscode.ExtensionContext, client: Context7Client) {
     this._client = client
   }
 
   /**
-   * 初始化：首次运行时将预设库合并到用户库
-   * 只执行一次，之后用户可以自由管理
+   * 获取用户库列表（从设置读取）
    */
-  public async initialize(): Promise<void> {
-    const initialized = this._context.globalState.get<boolean>(
-      this.INIT_KEY,
-      false,
-    )
-    if (initialized) {
-      return
-    }
-
-    const libraries = this.getUserLibraries()
-    if (libraries.length === 0) {
-      // 首次运行，将预设库作为默认值
-      const defaultLibraries: UserLibrary[] = COMMON_LIBRARIES.map((lib) => ({
-        id: lib.id,
-        name: lib.name,
-        addedAt: Date.now(),
-      }))
-      await this._saveUserLibraries(defaultLibraries)
-      console.log(
-        '[Context7] Initialized with',
-        defaultLibraries.length,
-        'preset libraries',
-      )
-    }
-
-    await this._context.globalState.update(this.INIT_KEY, true)
+  public getLibraries(): Library[] {
+    const config = vscode.workspace.getConfiguration('context7')
+    return config.get<Library[]>('libraries', [])
   }
 
   /**
-   * 获取用户库列表
+   * 添加库
    */
-  public getUserLibraries(): UserLibrary[] {
-    return this._context.globalState.get<UserLibrary[]>('userLibraries', [])
-  }
-
-  /**
-   * 添加用户库
-   */
-  public async addUserLibrary(id: string, name: string): Promise<void> {
-    const libraries = this.getUserLibraries()
+  public async addLibrary(id: string, name: string): Promise<void> {
+    const libraries = this.getLibraries()
     if (!libraries.some((lib) => lib.id === id)) {
-      libraries.push({ id, name, addedAt: Date.now() })
-      await this._saveUserLibraries(libraries)
+      libraries.push({ id, name })
+      await this._saveLibraries(libraries)
     }
   }
 
   /**
-   * 删除用户库
+   * 删除库
    */
-  public async removeUserLibrary(id: string): Promise<void> {
-    const libraries = this.getUserLibraries().filter((lib) => lib.id !== id)
-    await this._saveUserLibraries(libraries)
+  public async removeLibrary(id: string): Promise<void> {
+    const libraries = this.getLibraries().filter((lib) => lib.id !== id)
+    await this._saveLibraries(libraries)
   }
 
   /**
-   * 编辑用户库 ID
+   * 编辑库 ID
    */
-  public async editUserLibrary(name: string, newId: string): Promise<void> {
-    const libraries = this.getUserLibraries()
+  public async editLibrary(name: string, newId: string): Promise<void> {
+    const libraries = this.getLibraries()
     const lib = libraries.find((l) => l.name === name)
     if (lib) {
       lib.id = newId
-      await this._saveUserLibraries(libraries)
+      await this._saveLibraries(libraries)
     }
   }
 
   /**
-   * 根据库名查找库（仅查用户库）
+   * 根据库名查找库
    */
   public findLibraryByName(name: string): LibraryInfo | undefined {
     const normalizedName = name.toLowerCase().replace(/^@/, '')
-    const libraries = this.getUserLibraries()
+    const libraries = this.getLibraries()
     const match = libraries.find(
       (lib) =>
         lib.name.toLowerCase() === normalizedName ||
@@ -120,10 +87,10 @@ export class LibraryService {
   }
 
   /**
-   * 根据 ID 查找库（仅查用户库）
+   * 根据 ID 查找库
    */
   public findLibraryById(id: string): LibraryInfo | undefined {
-    const libraries = this.getUserLibraries()
+    const libraries = this.getLibraries()
     const match = libraries.find((lib) => lib.id === id)
     return match ? { id: match.id, name: match.name } : undefined
   }
@@ -131,8 +98,8 @@ export class LibraryService {
   /**
    * 获取所有库（按字母排序）
    */
-  public getSortedLibraries(): UserLibrary[] {
-    return [...this.getUserLibraries()].sort((a, b) =>
+  public getSortedLibraries(): Library[] {
+    return [...this.getLibraries()].sort((a, b) =>
       a.name.localeCompare(b.name),
     )
   }
@@ -148,12 +115,9 @@ export class LibraryService {
     continueSearch: boolean = false,
     skipConfirm: boolean = false,
   ): Promise<LibraryInfo | undefined> {
-    // 如果跳过确认且有预填名称，直接搜索
     let currentName = presetName ?? ''
 
-    // 循环支持 ESC 返回上一级
     while (true) {
-      // 跳过确认时直接用 presetName，否则弹出输入框
       const name =
         skipConfirm && currentName
           ? currentName
@@ -163,11 +127,9 @@ export class LibraryService {
               value: currentName,
             })
 
-      // 重置 skipConfirm，后续循环需要用户输入
       skipConfirm = false
 
       if (!name) {
-        // ESC 或空输入，退出循环
         return undefined
       }
 
@@ -192,7 +154,7 @@ export class LibraryService {
             'Cancel',
           )
           if (retry === 'Try Again') {
-            continue // 返回输入框
+            continue
           }
           return undefined
         }
@@ -225,19 +187,14 @@ export class LibraryService {
         })
 
         if (!selected) {
-          // ESC，返回上一级
           continue
         }
 
         if (selected.isBack) {
-          // 选择"返回"，继续循环
           continue
         }
 
-        await this.addUserLibrary(
-          selected.libraryId,
-          selected.libraryTitle.toLowerCase(),
-        )
+        await this.addLibrary(selected.libraryId, selected.libraryTitle.toLowerCase())
         vscode.window.showInformationMessage(
           `Added "${selected.libraryTitle}" to your libraries`,
         )
@@ -266,7 +223,6 @@ export class LibraryService {
 
   /**
    * 直接通过 ID 添加库
-   * @param continueSearch 是否返回库信息以继续搜索
    */
   public async addLibraryById(
     continueSearch: boolean = false,
@@ -282,7 +238,7 @@ export class LibraryService {
     }
 
     const name = id.split('/').pop() || id
-    await this.addUserLibrary(id, name)
+    await this.addLibrary(id, name)
     vscode.window.showInformationMessage(`Added "${name}" to your libraries`)
 
     if (continueSearch) {
@@ -292,9 +248,14 @@ export class LibraryService {
   }
 
   /**
-   * 保存用户库
+   * 保存库列表到设置
    */
-  private async _saveUserLibraries(libraries: UserLibrary[]): Promise<void> {
-    await this._context.globalState.update('userLibraries', libraries)
+  private async _saveLibraries(libraries: Library[]): Promise<void> {
+    const config = vscode.workspace.getConfiguration('context7')
+    await config.update(
+      'libraries',
+      libraries,
+      vscode.ConfigurationTarget.Global,
+    )
   }
 }

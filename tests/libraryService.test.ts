@@ -72,26 +72,32 @@ vi.mock('vscode', () => ({
   CancellationToken: {},
 }))
 
-describe('DocSearchViewProvider - User Library Management', () => {
+describe('DocSearchViewProvider - Library Management', () => {
   let provider: DocSearchViewProvider
   let mockContext: MockExtensionContext
   let mockClient: Context7Client
-  let globalStateGet: ReturnType<typeof vi.fn>
-  let globalStateUpdate: ReturnType<typeof vi.fn>
+  let configGet: ReturnType<typeof vi.fn>
+  let configUpdate: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
     vi.clearAllMocks()
 
     // 创建 Mock 函数
-    globalStateGet = vi.fn((_key: string, defaultValue: unknown) => defaultValue)
-    globalStateUpdate = vi.fn(() => Promise.resolve())
+    configGet = vi.fn((key: string, defaultValue: unknown) => defaultValue)
+    configUpdate = vi.fn(() => Promise.resolve())
 
-    // Mock extension context with globalState and secrets
+    // Mock workspace.getConfiguration
+    vi.mocked(vscode.workspace.getConfiguration).mockReturnValue({
+      get: configGet,
+      update: configUpdate,
+    } as unknown as vscode.WorkspaceConfiguration)
+
+    // Mock extension context with secrets
     mockContext = {
       extensionUri: { fsPath: '/test/extension' },
       globalState: {
-        get: globalStateGet as unknown as MockExtensionContext['globalState']['get'],
-        update: globalStateUpdate as unknown as MockExtensionContext['globalState']['update'],
+        get: vi.fn((_key: string, defaultValue: unknown) => defaultValue),
+        update: vi.fn(() => Promise.resolve()),
       },
       secrets: createMockSecretStorage(),
       subscriptions: [],
@@ -105,73 +111,59 @@ describe('DocSearchViewProvider - User Library Management', () => {
     vi.restoreAllMocks()
   })
 
-  describe('User Library CRUD', () => {
-    // 由于方法是私有的，我们通过模拟 globalState 来测试行为
-    // 这里主要测试状态管理的逻辑
-
-    it('should initialize with empty user libraries', () => {
-      expect(mockContext.globalState.get).toBeDefined()
+  describe('Library CRUD via Settings', () => {
+    it('should get libraries from settings', () => {
+      expect(vscode.workspace.getConfiguration).toBeDefined()
     })
 
-    it('should save user libraries to globalState', async () => {
+    it('should save libraries to settings', async () => {
       const libraries = [
-        { id: '/facebook/react', name: 'react', addedAt: Date.now() },
+        { id: '/facebook/react', name: 'react' },
       ]
 
-      await mockContext.globalState.update('userLibraries', libraries)
+      await vscode.workspace.getConfiguration('context7').update('libraries', libraries)
 
-      expect(mockContext.globalState.update).toHaveBeenCalledWith(
-        'userLibraries',
-        libraries,
-      )
+      expect(configUpdate).toHaveBeenCalledWith('libraries', libraries)
     })
 
-    it('should retrieve user libraries from globalState', () => {
+    it('should retrieve libraries from settings', () => {
       const libraries = [
-        { id: '/vuejs/vue', name: 'vue', addedAt: Date.now() },
+        { id: '/vuejs/vue', name: 'vue' },
       ]
 
-      globalStateGet.mockReturnValue(libraries)
+      configGet.mockReturnValue(libraries)
 
-      const result = mockContext.globalState.get('userLibraries', [])
+      const result = vscode.workspace.getConfiguration('context7').get('libraries', [])
 
       expect(result).toEqual(libraries)
     })
 
-    it('should handle empty user libraries', () => {
-      globalStateGet.mockReturnValue([])
+    it('should handle empty libraries', () => {
+      configGet.mockReturnValue([])
 
-      const result = mockContext.globalState.get('userLibraries', [])
+      const result = vscode.workspace.getConfiguration('context7').get('libraries', [])
 
       expect(result).toEqual([])
     })
 
     it('should add new library without duplicates', async () => {
       const existingLibraries = [
-        { id: '/facebook/react', name: 'react', addedAt: 1000 },
+        { id: '/facebook/react', name: 'react' },
       ]
 
-      globalStateGet.mockReturnValue(existingLibraries)
+      configGet.mockReturnValue(existingLibraries)
 
-      const newLibrary = {
-        id: '/vuejs/vue',
-        name: 'vue',
-        addedAt: Date.now(),
-      }
-
+      const newLibrary = { id: '/vuejs/vue', name: 'vue' }
       const updatedLibraries = [...existingLibraries, newLibrary]
-      await mockContext.globalState.update('userLibraries', updatedLibraries)
+      await vscode.workspace.getConfiguration('context7').update('libraries', updatedLibraries)
 
-      expect(mockContext.globalState.update).toHaveBeenCalledWith(
-        'userLibraries',
-        updatedLibraries,
-      )
+      expect(configUpdate).toHaveBeenCalledWith('libraries', updatedLibraries)
     })
 
     it('should remove library by id', async () => {
       const libraries = [
-        { id: '/facebook/react', name: 'react', addedAt: 1000 },
-        { id: '/vuejs/vue', name: 'vue', addedAt: 2000 },
+        { id: '/facebook/react', name: 'react' },
+        { id: '/vuejs/vue', name: 'vue' },
       ]
 
       const filtered = libraries.filter((lib) => lib.id !== '/facebook/react')
@@ -182,7 +174,7 @@ describe('DocSearchViewProvider - User Library Management', () => {
 
     it('should edit library id', async () => {
       const libraries = [
-        { id: '/facebook/react', name: 'react', addedAt: 1000 },
+        { id: '/facebook/react', name: 'react' },
       ]
 
       const lib = libraries.find((l) => l.name === 'react')
@@ -195,8 +187,6 @@ describe('DocSearchViewProvider - User Library Management', () => {
   })
 
   describe('Library Name Lookup', () => {
-    // 测试库名查找逻辑（通过模拟 COMMON_LIBRARIES 的查找）
-
     it('should normalize library names for matching', () => {
       const libraryName = '@types/react'
       const normalized = libraryName.toLowerCase().replace(/^@/, '')

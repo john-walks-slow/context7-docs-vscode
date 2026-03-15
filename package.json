@@ -104,6 +104,26 @@
           "name": "Documentation Search"
         }
       ]
+    },
+    "configuration": {
+      "title": "Context7 Docs",
+      "properties": {
+        "context7.libraries": {
+          "type": "array",
+          "default": [
+            { "id": "/websites/react_dev", "name": "react" },
+            { "id": "/vuejs/vue", "name": "vue" },
+            { "id": "/microsoft/TypeScript", "name": "typescript" },
+            { "id": "/vercel/next.js", "name": "next.js" },
+            { "id": "/tailwindlabs/tailwindcss", "name": "tailwindcss" },
+            { "id": "/vitejs/vite", "name": "vite" },
+            { "id": "/prisma/prisma", "name": "prisma" },
+            { "id": "/colinhacks/zod", "name": "zod" }
+          ],
+          "description": "Library list for documentation search. Each item requires 'id' and 'name' properties.",
+          "scope": "application"
+        }
+      }
     }
   },
   "scripts": {

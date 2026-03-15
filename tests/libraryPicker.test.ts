@@ -118,10 +118,10 @@ describe('LibraryPicker', () => {
   let libraryPicker: LibraryPicker
   let mockLibraryService: LibraryService
 
-  const mockUserLibraries = [
-    { id: '/facebook/react', name: 'react', addedAt: Date.now() },
-    { id: '/vuejs/vue', name: 'vue', addedAt: Date.now() },
-    { id: '/axios/axios', name: 'axios', addedAt: Date.now() },
+  const mockLibraries = [
+    { id: '/facebook/react', name: 'react' },
+    { id: '/vuejs/vue', name: 'vue' },
+    { id: '/axios/axios', name: 'axios' },
   ]
 
   beforeEach(() => {
@@ -129,12 +129,13 @@ describe('LibraryPicker', () => {
     currentQuickPick = null
 
     mockLibraryService = {
-      getUserLibraries: vi.fn(() => mockUserLibraries),
-      getSortedLibraries: vi.fn(() => mockUserLibraries),
+      getLibraries: vi.fn(() => mockLibraries),
+      getSortedLibraries: vi.fn(() => mockLibraries),
       searchAndAddLibrary: vi.fn(),
       addLibraryById: vi.fn(),
-      removeUserLibrary: vi.fn(),
-      editUserLibrary: vi.fn(),
+      addLibrary: vi.fn(),
+      removeLibrary: vi.fn(),
+      editLibrary: vi.fn(),
       findLibraryById: vi.fn(),
       findLibraryByName: vi.fn(),
     } as unknown as LibraryService
@@ -289,7 +290,7 @@ describe('LibraryPicker', () => {
       await qp._clickButton(axiosItem, { tooltip: 'Remove' })
       await promise
 
-      expect(mockLibraryService.removeUserLibrary).toHaveBeenCalledWith(
+      expect(mockLibraryService.removeLibrary).toHaveBeenCalledWith(
         '/axios/axios',
       )
     })
@@ -308,13 +309,13 @@ describe('LibraryPicker', () => {
       await qp._clickButton(axiosItem, { tooltip: 'Edit ID' })
       await promise
 
-      expect(mockLibraryService.editUserLibrary).toHaveBeenCalledWith(
+      expect(mockLibraryService.editLibrary).toHaveBeenCalledWith(
         'axios',
         '/axios/axios-new',
       )
     })
 
-    it('用户取消删除时不调用 removeUserLibrary', async () => {
+    it('用户取消删除时不调用 removeLibrary', async () => {
       vi.mocked(vscode.window.showWarningMessage).mockResolvedValue(
         'Cancel' as any,
       )
@@ -328,7 +329,7 @@ describe('LibraryPicker', () => {
       await qp._clickButton(axiosItem, { tooltip: 'Remove' })
       await promise
 
-      expect(mockLibraryService.removeUserLibrary).not.toHaveBeenCalled()
+      expect(mockLibraryService.removeLibrary).not.toHaveBeenCalled()
     })
   })
 
