@@ -28,6 +28,12 @@ node_modules/
 # Misc
 .env
 *.log
+.playwright-mcp/
+.github/
+pnpm-lock.yaml
+scripts/
+**/*.test.ts
+**/*.spec.ts
 *.vsix
 .learning
 examples/
