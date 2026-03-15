@@ -471,27 +471,6 @@ body {
   background: var(--code-bg-light) !important;
 }
 
-/* Result Footer */
-.result-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--vscode-editorWidget-border);
-}
-
-.result-footer .meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-}
-
-.result-footer .actions {
-  margin-top: 0;
-}
-
 /* Source Link */
 .source-link {
   font-size: 11px;

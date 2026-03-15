@@ -380,31 +380,43 @@ export class Context7Client {
         })
       }
 
-      // 提取标题（第一个 # 开头的行）
-      const titleMatch = section.match(/^#\s+(.+)$/m)
+      // 提取标题（第一个 # 或 ### 开头的行）
+      const titleMatch = section.match(/^#{1,3}\s+(.+)$/m)
       const title = titleMatch ? titleMatch[1].trim() : 'Documentation'
 
-      // 移除代码块和标题后的内容作为描述
-      const description = section
-        .replace(codeBlockRegex, '')
-        .replace(/^#\s+.+$/m, '')
-        .trim()
+      // 提取 Source URL
+      const sourceMatch = section.match(/Source:\s*(https?:\/\/[^\s\n]+)/i)
+      const sourceUrl = sourceMatch ? sourceMatch[1].trim() : undefined
 
       if (codeBlocks.length > 0) {
+        // 代码片段：描述移除标题（标题单独显示），移除 Source（单独显示为链接）
+        const description = section
+          .replace(codeBlockRegex, '')
+          .replace(/^#{1,3}\s+.+$/m, '')
+          .replace(/Source:\s*https?:\/\/[^\s\n]+/gi, '')
+          .trim()
+
         // 有代码块，作为 codeSnippet
         codeSnippets.push({
           codeTitle: title,
           codeDescription: description,
           codeLanguage: codeBlocks[0].language,
           codeList: codeBlocks,
+          codeId: sourceUrl, // 源代码 URL
         })
-      } else if (description) {
-        // 纯文本，作为 infoSnippet
-        infoSnippets.push({
-          pageId: '',
-          breadcrumb: '',
-          content: section.trim(),
-        })
+      } else {
+        // Info 片段：保留完整内容（含标题），移除 Source（单独显示为链接）
+        const content = section
+          .replace(/Source:\s*https?:\/\/[^\s\n]+/gi, '')
+          .trim()
+
+        if (content) {
+          infoSnippets.push({
+            pageId: sourceUrl || '', // 源文档 URL
+            breadcrumb: '',
+            content,
+          })
+        }
       }
     }
 
