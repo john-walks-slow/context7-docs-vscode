@@ -2,7 +2,7 @@
   "name": "context7-docs",
   "displayName": "Context7 Docs (For Human)",
   "description": "Search library docs, code snippets, and examples directly in VS Code",
-  "version": "0.1.1522",
+  "version": "0.1.1523",
   "publisher": "JohnnRen",
   "license": "MIT",
   "icon": "resources/icon.png",
@@ -145,6 +145,24 @@
             }
           ],
           "description": "Library list for documentation search. Each item requires 'id' and 'name' properties.",
+          "scope": "application"
+        },
+        "context7.pathPatterns": {
+          "type": "array",
+          "default": [
+            { "languages": ["javascript", "typescript", "javascriptreact", "typescriptreact", "vue"], "pattern": ".*node_modules/@types/([^/]+)" },
+            { "languages": ["javascript", "typescript", "javascriptreact", "typescriptreact", "vue"], "pattern": ".*node_modules/(@[^/]+/[^/]+|[^/]+)" },
+            { "languages": ["python"], "pattern": ".*site-packages/([^/]+)" },
+            { "languages": ["go"], "pattern": ".*pkg/mod/(.+)@" },
+            { "languages": ["rust"], "pattern": ".*registry/src/[^/]+/(.+)-\\d+\\.\\d+" },
+            { "languages": ["java"], "pattern": ".*\\.m2/repository/(.+/[^/]+)/\\d" },
+            { "languages": ["java"], "pattern": ".*\\.gradle/caches/modules-\\d+/files-\\d+\\.\\d+/([^/]+/[^/]+)" },
+            { "languages": ["csharp"], "pattern": ".*[/\\\\](?:\\.nuget/packages|packages)[/\\\\]([^/\\\\]+)" },
+            { "languages": ["ruby"], "pattern": ".*gems/(.+)-\\d+\\.\\d+" },
+            { "languages": ["php"], "pattern": ".*vendor/([^/]+/[^/]+)" },
+            { "languages": ["dart"], "pattern": ".*(?:\\.pub-cache|Pub/Cache)/hosted/[^/]+/(.+)-\\d+\\.\\d+" }
+          ],
+          "description": "Path patterns to extract library names from definition file paths. Each item has 'languages' (array) and 'pattern' (regex string). User patterns are prepended to defaults.",
           "scope": "application"
         }
       }

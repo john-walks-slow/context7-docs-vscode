@@ -1,7 +1,20 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { extractLibraryFromPath } from '../src/constants/languagePaths'
 
+// Mock VS Code API
+vi.mock('vscode', () => ({
+  workspace: {
+    getConfiguration: vi.fn(() => ({
+      get: vi.fn(() => []), // 返回空的用户模式，使用默认值
+    })),
+  },
+}))
+
 describe('languagePaths', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   describe('JavaScript/TypeScript/Vue', () => {
     const languages = [
       'javascript',

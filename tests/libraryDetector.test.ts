@@ -49,6 +49,11 @@ vi.mock('vscode', () => ({
   commands: {
     executeCommand: vi.fn(),
   },
+  workspace: {
+    getConfiguration: vi.fn(() => ({
+      get: vi.fn(() => []), // 返回空的用户模式，使用默认值
+    })),
+  },
 }))
 
 // ==================== 测试辅助函数 ====================
