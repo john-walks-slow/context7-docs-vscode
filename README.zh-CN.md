@@ -14,9 +14,9 @@
 ## ✨ 特性
 
 - **开箱即用** - 无需任何配置即可使用（通过 MCP 匿名访问）
-- **智能库检测** - 通过 LSP 自动识别代码所属库
+- **智能库检测** - 通过 LSP 自动识别代码所属库 (支持 10+ 语言)
 - **历史记录** - 自动记录查询历史
-- **语法高亮** - 渲染代码块和 markdown
+- **语法高亮** - 渲染代码块和 markdown，可选自动换行
 - **安全存储** - 使用 VS Code SecretStorage 安全存储 API Key
 - **结果缓存** - 缓存加速重复搜索
 - **库管理** - 添加、编辑、删除自定义库
@@ -34,20 +34,6 @@
 - 使用 `Context7: Search Documentation` 命令
 - 选择要查询文档的库
 - 输入查询内容
-
-## 🌍 支持语言（智能识别功能）
-
-| 语言                    | 包管理器 / 路径                |
-| ----------------------- | ------------------------------ |
-| JavaScript / TypeScript | npm, yarn, pnpm, Yarn PnP      |
-| Python                  | pip, poetry, conda, virtualenv |
-| Go                      | Go Modules                     |
-| Rust                    | Cargo                          |
-| Java                    | Maven, Gradle                  |
-| C#                      | NuGet                          |
-| Ruby                    | rbenv, rvm, chruby             |
-| PHP                     | Composer                       |
-| Dart / Flutter          | pub                            |
 
 ## 📋 命令
 
@@ -86,6 +72,51 @@
     }
   ]
 }
+```
+
+默认值：
+
+```json
+[
+  {
+    "languages": [
+      "javascript",
+      "typescript",
+      "javascriptreact",
+      "typescriptreact",
+      "vue"
+    ],
+    "pattern": ".*node_modules/@types/([^/]+)"
+  },
+  {
+    "languages": [
+      "javascript",
+      "typescript",
+      "javascriptreact",
+      "typescriptreact",
+      "vue"
+    ],
+    "pattern": ".*node_modules/(@[^/]+/[^/]+|[^/]+)"
+  },
+  { "languages": ["python"], "pattern": ".*site-packages/([^/]+)" },
+  { "languages": ["go"], "pattern": ".*pkg/mod/(.+)@" },
+  { "languages": ["rust"], "pattern": ".*registry/src/[^/]+/(.+)-\\d+\\.\\d+" },
+  { "languages": ["java"], "pattern": ".*\\.m2/repository/(.+/[^/]+)/\\d" },
+  {
+    "languages": ["java"],
+    "pattern": ".*\\.gradle/caches/modules-\\d+/files-\\d+\\.\\d+/([^/]+/[^/]+)"
+  },
+  {
+    "languages": ["csharp"],
+    "pattern": ".*[/\\\\](?:\\.nuget/packages|packages)[/\\\\]([^/\\\\]+)"
+  },
+  { "languages": ["ruby"], "pattern": ".*gems/(.+)-\\d+\\.\\d+" },
+  { "languages": ["php"], "pattern": ".*vendor/([^/]+/[^/]+)" },
+  {
+    "languages": ["dart"],
+    "pattern": ".*(?:\\.pub-cache|Pub/Cache)/hosted/[^/]+/(.+)-\\d+\\.\\d+"
+  }
+]
 ```
 
 用户模式会**优先于**默认模式匹配，可为特定项目结构自定义行为。

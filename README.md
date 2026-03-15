@@ -11,17 +11,17 @@ Search library documentations, code snippets, and examples directly in VS Code, 
 
 > AI has Context7 for instant docs. Now you do too！
 
-## Features
+## ✨ Features
 
 - **Zero Setup** - Works without API key via MCP endpoint
-- **Smart Library Detection** - Automatically detects libraries from selected code using LSP
+- **Smart Library Detection** - Automatically detects libraries from selected code using LSP (Support 10+ languages)
 - **Search History** - Automatically records query history
-- **Syntax Highlighting** - Render code blocks and markdown
+- **Syntax Highlighting** - Render code blocks and markdown; auto-wrap
 - **Secure API Key Storage** - Uses VS Code SecretStorage
 - **Result Caching** - Cache for faster repeated searches
 - **Quick Library Management** - Add, edit, and remove custom libraries
 
-## Getting Started
+## 🚀 Getting Started
 
 **Via Selection:**
 
@@ -29,29 +29,13 @@ Search library documentations, code snippets, and examples directly in VS Code, 
 - Right-click and choose "Context7: Search Selection"
 - The extension auto-detects the library and searches
 
-**Via Sidebar:**
+**Via Command:**
 
-- Open the Context7 panel in the sidebar
+- Use command `Context7: Search Documentation`
 - Select a library or search for one
 - Enter your query
 
-## Supported Languages
-
-The library detector supports:
-
-| Language                | Package Manager / Path         |
-| ----------------------- | ------------------------------ |
-| JavaScript / TypeScript | npm, yarn, pnpm, Yarn PnP      |
-| Python                  | pip, poetry, conda, virtualenv |
-| Go                      | Go Modules                     |
-| Rust                    | Cargo                          |
-| Java                    | Maven, Gradle                  |
-| C#                      | NuGet                          |
-| Ruby                    | rbenv, rvm, chruby             |
-| PHP                     | Composer                       |
-| Dart / Flutter          | pub                            |
-
-## Commands
+## 📋 Commands
 
 | Command                          | Description                        |
 | -------------------------------- | ---------------------------------- |
@@ -60,9 +44,7 @@ The library detector supports:
 | `Context7: Search Selection`     | Search docs for code under cursor  |
 | `Context7: Configure API Key`    | Set or update API key              |
 
-## Configuration
-
-Customize via VS Code settings (`settings.json`):
+## ⚙️ Configuration (`settings.json`)
 
 ### Libraries
 
@@ -90,16 +72,61 @@ Add custom patterns to extract library names from file paths:
 }
 ```
 
+Default:
+
+```json
+[
+  {
+    "languages": [
+      "javascript",
+      "typescript",
+      "javascriptreact",
+      "typescriptreact",
+      "vue"
+    ],
+    "pattern": ".*node_modules/@types/([^/]+)"
+  },
+  {
+    "languages": [
+      "javascript",
+      "typescript",
+      "javascriptreact",
+      "typescriptreact",
+      "vue"
+    ],
+    "pattern": ".*node_modules/(@[^/]+/[^/]+|[^/]+)"
+  },
+  { "languages": ["python"], "pattern": ".*site-packages/([^/]+)" },
+  { "languages": ["go"], "pattern": ".*pkg/mod/(.+)@" },
+  { "languages": ["rust"], "pattern": ".*registry/src/[^/]+/(.+)-\\d+\\.\\d+" },
+  { "languages": ["java"], "pattern": ".*\\.m2/repository/(.+/[^/]+)/\\d" },
+  {
+    "languages": ["java"],
+    "pattern": ".*\\.gradle/caches/modules-\\d+/files-\\d+\\.\\d+/([^/]+/[^/]+)"
+  },
+  {
+    "languages": ["csharp"],
+    "pattern": ".*[/\\\\](?:\\.nuget/packages|packages)[/\\\\]([^/\\\\]+)"
+  },
+  { "languages": ["ruby"], "pattern": ".*gems/(.+)-\\d+\\.\\d+" },
+  { "languages": ["php"], "pattern": ".*vendor/([^/]+/[^/]+)" },
+  {
+    "languages": ["dart"],
+    "pattern": ".*(?:\\.pub-cache|Pub/Cache)/hosted/[^/]+/(.+)-\\d+\\.\\d+"
+  }
+]
+```
+
 User patterns are matched **before** defaults, allowing you to override behavior for specific project structures.
 
-### Access Modes
+## 🔑 Access Modes
 
 |            | Anonymous (Default) | API Key                                                             |
 | ---------- | ------------------- | ------------------------------------------------------------------- |
 | Rate Limit | IP-based            | 1,000/month (Free)                                                  |
 | Setup      | Zero config         | Get key at [context7.com/dashboard](https://context7.com/dashboard) |
 
-## Development
+## 🛠️ Development
 
 ```bash
 # Install dependencies
@@ -147,7 +174,7 @@ vsce publish <version>
 code --install-extension context7-docs-0.1.0.vsix
 ```
 
-## Architecture
+## 📐 Architecture
 
 ```
 src/
