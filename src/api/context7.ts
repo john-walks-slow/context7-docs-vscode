@@ -389,7 +389,7 @@ export class Context7Client {
       const sourceUrl = sourceMatch ? sourceMatch[1].trim() : undefined
 
       if (codeBlocks.length > 0) {
-        // 代码片段：描述移除标题（标题单独显示），移除 Source（单独显示为链接）
+        // 代码片段：描述移除标题和 Source
         const description = section
           .replace(codeBlockRegex, '')
           .replace(/^#{1,3}\s+.+$/m, '')
@@ -405,15 +405,16 @@ export class Context7Client {
           codeId: sourceUrl, // 源代码 URL
         })
       } else {
-        // Info 片段：保留完整内容（含标题），移除 Source（单独显示为链接）
+        // Info 片段：同样移除标题和 Source
         const content = section
+          .replace(/^#{1,3}\s+.+$/m, '')
           .replace(/Source:\s*https?:\/\/[^\s\n]+/gi, '')
           .trim()
 
         if (content) {
           infoSnippets.push({
             pageId: sourceUrl || '', // 源文档 URL
-            breadcrumb: '',
+            breadcrumb: title, // 用 breadcrumb 存储标题
             content,
           })
         }
