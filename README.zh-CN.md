@@ -2,7 +2,7 @@
 
 [English](README.md) | [中文](README.zh-CN.md)
 
-[![VS Code](https://img.shields.io/badge/VS%20Code-1.101+-blue.svg)](https://code.visualstudio.com/)
+[![Get VS Code Extension](https://img.shields.io/badge/VS%20Code%20Extension-Get-blue.svg)](https://marketplace.visualstudio.com/items?itemName=JohnnRen.context7-docs)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 使用 Context7 在 VS Code 中直接查询文档、代码示例和 API 说明。

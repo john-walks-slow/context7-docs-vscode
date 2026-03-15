@@ -2,7 +2,7 @@
 
 [English](README.md) | [中文](README.zh-CN.md)
 
-[![VS Code](https://img.shields.io/badge/VS%20Code-1.101+-blue.svg)](https://code.visualstudio.com/)
+[![Get VS Code Extension](https://img.shields.io/badge/VS%20Code%20Extension-Get-blue.svg)](https://marketplace.visualstudio.com/items?itemName=JohnnRen.context7-docs)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Search library documentations, code snippets, and examples directly in VS Code, using Context7.
