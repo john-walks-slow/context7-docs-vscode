@@ -9,6 +9,8 @@
 
 ![alt text](resources/screenshot.png)
 
+> (眼馋 AI 的 Context7.. 终于人也能用了！)
+
 ## ✨ 特性
 
 - **开箱即用** - 无需任何配置即可使用（通过 MCP 匿名访问）

@@ -9,6 +9,8 @@ Search library documentations, code snippets, and examples directly in VS Code, 
 
 ![alt text](resources/screenshot.png)
 
+> AI has Context7 for instant docs. Now you do too！
+
 ## Features
 
 - **Zero Setup** - Works without API key via MCP endpoint
