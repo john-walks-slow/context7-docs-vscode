@@ -11,7 +11,7 @@ Search library documentations, code snippets, and examples directly in VS Code, 
 
 > AI has Context7 for instant docs. Now you do too！
 
-## ✨ Features
+## Features
 
 - **Zero Setup** - Works without API key via MCP endpoint
 - **Smart Library Detection** - Automatically detects libraries from selected code using LSP (Support 10+ languages)
@@ -21,7 +21,7 @@ Search library documentations, code snippets, and examples directly in VS Code, 
 - **Result Caching** - Cache for faster repeated searches
 - **Quick Library Management** - Add, edit, and remove custom libraries
 
-## 🚀 Getting Started
+## Getting Started
 
 **Via Selection:**
 
@@ -35,7 +35,7 @@ Search library documentations, code snippets, and examples directly in VS Code, 
 - Select a library or search for one
 - Enter your query
 
-## 📋 Commands
+## Commands
 
 | Command                          | Description                        |
 | -------------------------------- | ---------------------------------- |
@@ -44,7 +44,7 @@ Search library documentations, code snippets, and examples directly in VS Code, 
 | `Context7: Search Selection`     | Search docs for code under cursor  |
 | `Context7: Configure API Key`    | Set or update API key              |
 
-## ⚙️ Configuration (`settings.json`)
+## Configuration (`settings.json`)
 
 ### Libraries
 
@@ -119,14 +119,14 @@ Default:
 
 User patterns are matched **before** defaults, allowing you to override behavior for specific project structures.
 
-## 🔑 Access Modes
+## Access Modes
 
 |            | Anonymous (Default) | API Key                                                             |
 | ---------- | ------------------- | ------------------------------------------------------------------- |
 | Rate Limit | IP-based            | 1,000/month (Free)                                                  |
 | Setup      | Zero config         | Get key at [context7.com/dashboard](https://context7.com/dashboard) |
 
-## 🛠️ Development
+## Development
 
 ```bash
 # Install dependencies
@@ -174,7 +174,7 @@ vsce publish <version>
 code --install-extension context7-docs-0.1.0.vsix
 ```
 
-## 📐 Architecture
+## Architecture
 
 ```
 src/
