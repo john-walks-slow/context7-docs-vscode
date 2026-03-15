@@ -11,34 +11,15 @@ Query documentation using Context7 API directly in VS Code. Search library docs,
 
 ## Features
 
+- **Zero Setup** - Works without API key via MCP endpoint
 - **Smart Library Detection** - Automatically detects libraries from selected code using LSP
-- **Quick Library Management** - Add, edit, and remove custom libraries
 - **Search History** - Automatically records query history
 - **Syntax Highlighting** - Render code blocks and markdown
 - **Secure API Key Storage** - Uses VS Code SecretStorage
 - **Result Caching** - Cache for faster repeated searches
-- **MCP Anonymous Access** - Works without API key via MCP endpoint
+- **Quick Library Management** - Add, edit, and remove custom libraries
 
 ## Getting Started
-
-### 1. Install the Extension
-
-Install from VS Code Marketplace or install the `.vsix` file manually.
-
-### 2. (Optional) Configure API Key
-
-Run `Context7: Configure API Key` from the command palette. You can get your key from [context7.com/dashboard](https://context7.com/dashboard).
-
-> **Note:** The extension works without an API key using anonymous MCP access. An API key provides access to the full API with better results.
-
-### Access Modes
-
-|            | Anonymous (Default) | API Key                                                             |
-| ---------- | ------------------- | ------------------------------------------------------------------- |
-| Rate Limit | IP-based            | 1,000/month (Free)                                                  |
-| Setup      | Zero config         | Get key at [context7.com/dashboard](https://context7.com/dashboard) |
-
-### 3. Search Documentation
 
 **Via Sidebar:**
 
@@ -51,15 +32,6 @@ Run `Context7: Configure API Key` from the command palette. You can get your key
 - Select code in the editor
 - Right-click and choose "Context7: Search Selection"
 - The extension auto-detects the library and searches
-
-## Commands
-
-| Command                          | Description                        |
-| -------------------------------- | ---------------------------------- |
-| `Context7: Search Documentation` | Search docs for a selected library |
-| `Context7: Manage Libraries`     | Manage your saved libraries        |
-| `Context7: Search Selection`     | Search docs for code under cursor  |
-| `Context7: Configure API Key`    | Set or update API key              |
 
 ## Supported Languages
 
@@ -76,6 +48,22 @@ The library detector supports:
 | Ruby                          | rbenv, rvm, chruby             |
 | PHP                           | Composer                       |
 | Dart / Flutter                | pub                            |
+
+## Commands
+
+| Command                          | Description                        |
+| -------------------------------- | ---------------------------------- |
+| `Context7: Search Documentation` | Search docs for a selected library |
+| `Context7: Manage Libraries`     | Manage your saved libraries        |
+| `Context7: Search Selection`     | Search docs for code under cursor  |
+| `Context7: Configure API Key`    | Set or update API key              |
+
+### Access Modes
+
+|            | Anonymous (Default) | API Key                                                             |
+| ---------- | ------------------- | ------------------------------------------------------------------- |
+| Rate Limit | IP-based            | 1,000/month (Free)                                                  |
+| Setup      | Zero config         | Get key at [context7.com/dashboard](https://context7.com/dashboard) |
 
 ## Development
 
@@ -100,23 +88,6 @@ pnpm lint
 ```
 
 Press `F5` to launch the extension in development mode.
-
-## Publishing
-
-### Prerequisites
-
-1. Install vsce tool:
-
-   ```bash
-   pnpm add -g @vscode/vsce
-   ```
-
-2. Create a publisher at [Visual Studio Marketplace](https://marketplace.visualstudio.com/manage) if you don't have one.
-
-3. Login to your publisher:
-   ```bash
-   vsce login <your-publisher-id>
-   ```
 
 ### Build Package
 
