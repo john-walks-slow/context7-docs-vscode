@@ -95,6 +95,15 @@
       ]
     },
     "views": {
+      "context7": [
+        {
+          "icon": "resources/icon-sidebar.svg",
+          "type": "webview",
+          "id": "context7.search",
+          "name": "Documentation Search"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "pnpm build",

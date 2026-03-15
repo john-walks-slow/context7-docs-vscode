@@ -69,9 +69,9 @@ export function isMcpResponse(value: unknown): value is McpResponse {
     typeof value === 'object' &&
     value !== null &&
     'jsonrpc' in value &&
-    (value as McpResponse<unknown>).jsonrpc === '2.0' &&
+    (value as McpResponse).jsonrpc === '2.0' &&
     'id' in value &&
-    typeof (value as McpResponse<unknown>).id === 'number'
+    typeof (value as McpResponse).id === 'number'
   )
 }
 
@@ -201,7 +201,7 @@ export class Context7Client {
       )
     }
 
-    const data: McpResponse<unknown> = await response.json()
+    const data: McpResponse = await response.json()
 
     if (data.error) {
       throw new Error(`MCP error: ${data.error.message}`)
