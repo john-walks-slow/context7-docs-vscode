@@ -1,0 +1,19 @@
+# Environment variables
+.env
+
+# Build output
+dist/
+out/
+
+# Dependencies
+node_modules/
+
+# IDE
+.vscode-test/
+*.vsix
+
+# Logs
+*.log
+
+.learning
+examples

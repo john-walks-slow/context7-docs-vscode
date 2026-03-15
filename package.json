@@ -1,0 +1,115 @@
+{
+  "name": "context7-docs",
+  "displayName": "Context7 Docs",
+  "description": "Query documentation using Context7 API",
+  "version": "0.0.1",
+  "publisher": "your-publisher-id",
+  "engines": {
+    "vscode": "^1.101.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "context7.search",
+        "title": "Context7: Search Documentation",
+        "icon": "$(search)"
+      },
+      {
+        "command": "context7.manageLibraries",
+        "title": "Context7: Manage Libraries",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "context7.searchSelection",
+        "title": "Context7: Search Selection",
+        "icon": "$(search)"
+      },
+      {
+        "command": "context7.configureApiKey",
+        "title": "Context7: Configure API Key"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "context7.searchSelection",
+          "when": "editorHasSelection",
+          "group": "search@1"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "context7.search",
+          "when": "view == context7.search",
+          "group": "navigation@1"
+        },
+        {
+          "command": "context7.manageLibraries",
+          "when": "view == context7.search",
+          "group": "navigation@2"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "context7",
+          "title": "Context7 Docs",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "context7": [
+        {
+          "type": "webview",
+          "id": "context7.search",
+          "name": "Documentation Search"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Context7",
+      "properties": {
+        "context7.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Context7 API Key (已弃用：请使用命令 'Context7: Configure API Key' 安全存储)"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "pnpm build",
+    "build": "vite build",
+    "watch": "vite build --watch",
+    "lint": "eslint src --ext ts,tsx",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/vscode": "^1.101.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^9.20.0",
+    "typescript": "^5.7.0",
+    "vite": "^6.2.0",
+    "vitest": "^4.1.0"
+  },
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "shiki": "^4.0.2"
+  }
+}

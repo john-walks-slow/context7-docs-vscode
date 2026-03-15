@@ -1,0 +1,18 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "type": "command",
+        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/remind-commit.sh\"",
+        "windows": "pwsh -File \"$CLAUDE_PROJECT_DIR/.claude/hooks/remind-commit.ps1\""
+      }
+    ],
+    "SubagentStop": [
+      {
+        "type": "command",
+        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/remind-commit.sh\"",
+        "windows": "pwsh -File \"$CLAUDE_PROJECT_DIR/.claude/hooks/remind-commit.ps1\""
+      }
+    ]
+  }
+}
