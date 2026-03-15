@@ -7,7 +7,7 @@
 
 使用 Context7 在 VS Code 中直接查询文档、代码示例和 API 说明。
 
-> (眼馋你的 AI 的 Context7 ？现在你也能用了)
+![alt text](resources/screenshot.png)
 
 ## ✨ 特性
 

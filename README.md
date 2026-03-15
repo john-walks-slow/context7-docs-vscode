@@ -7,7 +7,7 @@
 
 Query documentation using Context7 API directly in VS Code. Search library docs, code snippets, and examples.
 
-> AI has Context7 for instant docs. Now you do too.
+![alt text](resources/screenshot.png)
 
 ## Features
 
