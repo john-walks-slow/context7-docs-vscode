@@ -35,6 +35,16 @@
       {
         "command": "context7.configureApiKey",
         "title": "Context7: Configure API Key"
+      },
+      {
+        "command": "context7.viewHistory",
+        "title": "Context7: View Search History",
+        "icon": "$(history)"
+      },
+      {
+        "command": "context7.viewBookmarks",
+        "title": "Context7: View Bookmarks",
+        "icon": "$(star)"
       }
     ],
     "menus": {
@@ -52,9 +62,19 @@
           "group": "navigation@1"
         },
         {
-          "command": "context7.manageLibraries",
+          "command": "context7.viewHistory",
           "when": "view == context7.search",
           "group": "navigation@2"
+        },
+        {
+          "command": "context7.viewBookmarks",
+          "when": "view == context7.search",
+          "group": "navigation@3"
+        },
+        {
+          "command": "context7.manageLibraries",
+          "when": "view == context7.search",
+          "group": "navigation@4"
         }
       ]
     },

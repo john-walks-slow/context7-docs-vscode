@@ -23,6 +23,7 @@ export class SearchService {
   private _highlighter: Highlighter | null = null
   private _currentTheme: string = 'dark'
   private _cache = new SearchCache()
+  private _lastResults: SearchResult[] = []
 
   constructor() {
     // 监听主题变化
@@ -42,7 +43,10 @@ export class SearchService {
   ): Promise<SearchResult[]> {
     // 检查缓存
     const cached = this._cache.get(libraryId, query)
-    if (cached) return cached
+    if (cached) {
+      this._lastResults = cached
+      return cached
+    }
 
     // 执行搜索
     const response = await client.searchWithLibraryId(libraryId, query)
@@ -50,7 +54,15 @@ export class SearchService {
 
     // 存入缓存
     this._cache.set(libraryId, query, results)
+    this._lastResults = results
     return results
+  }
+
+  /**
+   * 获取最后一次搜索结果
+   */
+  public getLastResults(): SearchResult[] {
+    return this._lastResults
   }
 
   /**
