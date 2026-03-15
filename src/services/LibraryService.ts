@@ -141,20 +141,29 @@ export class LibraryService {
    * 搜索并添加库
    * @param presetName 预填的库名
    * @param continueSearch 是否返回库信息以继续搜索
+   * @param skipConfirm 是否跳过输入确认（直接用 presetName 搜索）
    */
   public async searchAndAddLibrary(
     presetName?: string,
     continueSearch: boolean = false,
+    skipConfirm: boolean = false,
   ): Promise<LibraryInfo | undefined> {
+    // 如果跳过确认且有预填名称，直接搜索
     let currentName = presetName ?? ''
 
     // 循环支持 ESC 返回上一级
     while (true) {
-      const name = await vscode.window.showInputBox({
-        prompt: 'Enter library name (ESC to go back)',
-        placeHolder: 'e.g., axios, lodash',
-        value: currentName,
-      })
+      // 跳过确认时直接用 presetName，否则弹出输入框
+      const name = skipConfirm && currentName
+        ? currentName
+        : await vscode.window.showInputBox({
+            prompt: 'Enter library name (ESC to go back)',
+            placeHolder: 'e.g., axios, lodash',
+            value: currentName,
+          })
+
+      // 重置 skipConfirm，后续循环需要用户输入
+      skipConfirm = false
 
       if (!name) {
         // ESC 或空输入，退出循环

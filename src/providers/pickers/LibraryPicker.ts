@@ -46,7 +46,7 @@ export class LibraryPicker {
       }
 
       if (choice.id === '__search__') {
-        return await this._libraryService.searchAndAddLibrary(searchName, true)
+        return await this._libraryService.searchAndAddLibrary(searchName, true, true)
       }
       // 走列表选择
       return await this.pickLibraryFromList()
@@ -122,24 +122,32 @@ export class LibraryPicker {
     return new Promise((resolve) => {
       quickPick.onDidAccept(() => {
         const selected = quickPick.activeItems[0]
+        const inputValue = quickPick.value.trim()
         quickPick.hide()
 
         if (!selected) {
+          // 没有选中项但有输入 → 直接搜索输入内容（跳过确认）
+          if (inputValue) {
+            this._libraryService
+              .searchAndAddLibrary(inputValue, true, true)
+              .then(resolve)
+            return
+          }
           resolve(undefined)
           return
         }
 
         if (selected.libraryId === SEARCH_INPUT_ITEM_ID) {
-          // 直接使用输入文本搜索
+          // 直接使用输入文本搜索（跳过确认）
           this._libraryService
-            .searchAndAddLibrary(selected.libraryName, true)
+            .searchAndAddLibrary(selected.libraryName, true, true)
             .then(resolve)
           return
         }
 
         if (selected.libraryId === '__search__') {
           this._libraryService
-            .searchAndAddLibrary(undefined, true)
+            .searchAndAddLibrary(inputValue || undefined, true)
             .then(resolve)
           return
         }

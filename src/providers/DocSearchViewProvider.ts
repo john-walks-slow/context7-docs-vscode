@@ -172,20 +172,31 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
     const detector = new LibraryDetector()
     const libraryInfo = await detector.detectLibraryFromSelection()
 
-    let library: LibraryInfo | undefined
+    // 情况1：LSP 高置信度检测成功
+    if (libraryInfo && libraryInfo.confidence === 'high') {
+      // 先在已知库中查找
+      const library = this._libraryService.findLibraryByName(libraryInfo.name)
+      if (library) {
+        await this._handleSearch(library.id, selectedText)
+        return
+      }
 
-    if (libraryInfo && libraryInfo.confidence !== 'low') {
-      // 尝试在已知库中匹配
-      library = this._libraryService.findLibraryByName(libraryInfo.name)
+      // 未知库，自动解析 libraryId 并搜索（无需用户确认）
+      try {
+        const results = await this._client.searchLibraries(libraryInfo.name)
+        if (results && results.length > 0) {
+          const resolved = results[0]
+          // 添加到用户库
+          await this._libraryService.addUserLibrary(resolved.id, resolved.title)
+          await this._handleSearch(resolved.id, selectedText)
+          return
+        }
+      } catch (error) {
+        console.error('[Context7] Auto-resolve failed:', error)
+      }
     }
 
-    // 找到已知库，直接搜索
-    if (library) {
-      await this._handleSearch(library.id, selectedText)
-      return
-    }
-
-    // 未找到匹配库，弹出选择器
+    // 情况2：低置信度或检测失败 → 弹出选择器
     const searchName = libraryInfo?.name || ''
     const result = await this._libraryPicker.selectLibraryForSearch(searchName)
 
