@@ -23,6 +23,7 @@ vi.mock('vscode', () => ({
         selectedItems: [] as any[],
         placeholder: '',
         visible: false,
+        value: '', // 添加 value 属性
         onDidTriggerItemButton: vi.fn((fn: Function) => {
           handlers.onDidTriggerItemButton =
             handlers.onDidTriggerItemButton || []
@@ -61,6 +62,7 @@ vi.mock('vscode', () => ({
           }
         },
         _changeValue: async (value: string) => {
+          quickPick.value = value // 更新 value
           for (const fn of handlers.onDidChangeValue || []) {
             await fn(value)
           }
@@ -368,6 +370,7 @@ describe('LibraryPicker', () => {
       expect(mockLibraryService.searchAndAddLibrary).toHaveBeenCalledWith(
         'test-lib',
         true,
+        true, // skipConfirm - 直接搜索无需确认
       )
       expect(onSearch).toHaveBeenCalledWith('/test/lib', 'lib')
     })
@@ -504,6 +507,7 @@ describe('LibraryPicker', () => {
       expect(mockLibraryService.searchAndAddLibrary).toHaveBeenCalledWith(
         'test-lib',
         true,
+        true, // skipConfirm - 直接搜索无需确认
       )
       expect(result).toEqual(mockResult)
     })

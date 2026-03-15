@@ -122,37 +122,39 @@ export class LibraryPicker {
     return new Promise((resolve) => {
       quickPick.onDidAccept(() => {
         const selected = quickPick.activeItems[0]
-        const inputValue = quickPick.value.trim()
+        const inputValue = quickPick.value?.trim() || ''
         quickPick.hide()
 
-        if (!selected) {
-          // 没有选中项但有输入 → 直接搜索输入内容（跳过确认）
-          if (inputValue) {
-            this._libraryService
-              .searchAndAddLibrary(inputValue, true, true)
-              .then(resolve)
-            return
-          }
-          resolve(undefined)
+        // 判断是否有匹配的库（非分隔线、非搜索项）
+        const hasMatchedLibrary = selected &&
+          selected.libraryId &&
+          selected.libraryId !== SEARCH_INPUT_ITEM_ID &&
+          selected.libraryId !== '__search__' &&
+          selected.kind !== vscode.QuickPickItemKind.Separator
+
+        if (hasMatchedLibrary) {
+          // 选中了现有库
+          resolve({ id: selected.libraryId, name: selected.libraryName })
           return
         }
 
-        if (selected.libraryId === SEARCH_INPUT_ITEM_ID) {
-          // 直接使用输入文本搜索（跳过确认）
+        // 输入新库名 → 直接搜索（跳过确认）
+        if (inputValue) {
           this._libraryService
-            .searchAndAddLibrary(selected.libraryName, true, true)
+            .searchAndAddLibrary(inputValue, true, true)
             .then(resolve)
           return
         }
 
-        if (selected.libraryId === '__search__') {
+        // 选中 "Search library..." 选项 → 弹出输入框
+        if (selected?.libraryId === '__search__') {
           this._libraryService
-            .searchAndAddLibrary(inputValue || undefined, true)
+            .searchAndAddLibrary(undefined, true)
             .then(resolve)
           return
         }
 
-        resolve({ id: selected.libraryId, name: selected.libraryName })
+        resolve(undefined)
       })
 
       quickPick.onDidHide(() => {
@@ -294,17 +296,35 @@ export class LibraryPicker {
 
     quickPick.onDidAccept(async () => {
       const selected = quickPick.activeItems[0]
+      const inputValue = quickPick.value?.trim() || ''
       quickPick.hide()
 
-      if (!selected) {
+      // 判断是否有匹配的库（非分隔线、非搜索项）
+      const hasMatchedLibrary = selected &&
+        selected.libraryId &&
+        selected.libraryId !== SEARCH_INPUT_ITEM_ID &&
+        selected.libraryId !== '__search__' &&
+        selected.libraryId !== '__addById__' &&
+        selected.kind !== vscode.QuickPickItemKind.Separator
+
+      if (hasMatchedLibrary) {
+        // 选择了已有的库
+        if (action === 'search' && onSearch) {
+          await onSearch(selected.libraryId, selected.libraryName)
+        } else {
+          // manage 模式：打开链接
+          const url = `https://context7.com${selected.libraryId}`
+          await vscode.env.openExternal(vscode.Uri.parse(url))
+        }
         return
       }
 
-      // 直接使用输入文本搜索
-      if (selected.libraryId === SEARCH_INPUT_ITEM_ID) {
+      // 输入新库名 → 直接搜索（跳过确认）
+      if (inputValue) {
         const result = await this._libraryService.searchAndAddLibrary(
-          selected.libraryName,
+          inputValue,
           action === 'search',
+          true, // skipConfirm
         )
         if (result && action === 'search' && onSearch) {
           await onSearch(result.id, result.name)
@@ -312,8 +332,8 @@ export class LibraryPicker {
         return
       }
 
-      // 搜索新库
-      if (selected.libraryId === '__search__') {
+      // 选中 "Search library..." 选项 → 弹出输入框
+      if (selected?.libraryId === '__search__') {
         const result = await this._libraryService.searchAndAddLibrary(
           undefined,
           action === 'search',
@@ -325,7 +345,7 @@ export class LibraryPicker {
       }
 
       // 通过 ID 添加
-      if (selected.libraryId === '__addById__') {
+      if (selected?.libraryId === '__addById__') {
         const result = await this._libraryService.addLibraryById(
           action === 'search',
         )
@@ -333,15 +353,6 @@ export class LibraryPicker {
           await onSearch(result.id, result.name)
         }
         return
-      }
-
-      // 选择了已有的库
-      if (action === 'search' && onSearch) {
-        await onSearch(selected.libraryId, selected.libraryName)
-      } else {
-        // manage 模式：打开链接
-        const url = `https://context7.com${selected.libraryId}`
-        await vscode.env.openExternal(vscode.Uri.parse(url))
       }
     })
 

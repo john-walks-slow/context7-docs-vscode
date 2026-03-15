@@ -154,13 +154,14 @@ export class LibraryService {
     // 循环支持 ESC 返回上一级
     while (true) {
       // 跳过确认时直接用 presetName，否则弹出输入框
-      const name = skipConfirm && currentName
-        ? currentName
-        : await vscode.window.showInputBox({
-            prompt: 'Enter library name (ESC to go back)',
-            placeHolder: 'e.g., axios, lodash',
-            value: currentName,
-          })
+      const name =
+        skipConfirm && currentName
+          ? currentName
+          : await vscode.window.showInputBox({
+              prompt: 'Enter library name (ESC to go back)',
+              placeHolder: 'e.g., axios, lodash',
+              value: currentName,
+            })
 
       // 重置 skipConfirm，后续循环需要用户输入
       skipConfirm = false
@@ -203,13 +204,6 @@ export class LibraryService {
         }
 
         const items: LibraryPickItem[] = [
-          {
-            label: '$(arrow-left) Back to search',
-            description: 'Search with a different name',
-            libraryId: '__back__',
-            libraryTitle: '',
-            isBack: true,
-          },
           ...results.map((r) => ({
             label: r.title,
             description: r.id,
@@ -217,6 +211,13 @@ export class LibraryService {
             libraryId: r.id,
             libraryTitle: r.title,
           })),
+          {
+            label: '$(arrow-left) Back to search',
+            description: 'Search with a different name',
+            libraryId: '__back__',
+            libraryTitle: '',
+            isBack: true,
+          },
         ]
 
         const selected = await vscode.window.showQuickPick(items, {
