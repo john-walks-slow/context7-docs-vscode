@@ -190,28 +190,37 @@ export class SearchService {
   }
 
   /**
-   * 检测代码语言
+   * 获取当前编辑器的语言
    */
-  public detectLanguage(code: string): string {
-    if (code.includes('import React') || code.includes('useState')) {
-      return 'tsx'
+  private getCurrentEditorLanguage(): string {
+    const editor = vscode.window.activeTextEditor
+    if (!editor) {
+      return 'markdown'
     }
-    if (code.includes('interface ') || code.includes(': string')) {
-      return 'typescript'
+
+    const languageId = editor.document.languageId
+    // 映射 VS Code 语言 ID 到 shiki 支持的语言
+    const languageMap: Record<string, string> = {
+      javascript: 'javascript',
+      typescript: 'typescript',
+      javascriptreact: 'jsx',
+      typescriptreact: 'tsx',
+      python: 'python',
+      go: 'go',
+      rust: 'rust',
+      java: 'java',
+      c: 'c',
+      cpp: 'cpp',
+      css: 'css',
+      html: 'html',
+      json: 'json',
+      yaml: 'yaml',
+      markdown: 'markdown',
+      bash: 'bash',
+      sql: 'sql',
     }
-    if (code.includes('def ') || code.includes('import ')) {
-      return 'python'
-    }
-    if (code.includes('func ') || code.includes('package ')) {
-      return 'go'
-    }
-    if (code.includes('fn ') || code.includes('let mut')) {
-      return 'rust'
-    }
-    if (code.includes('class ') && code.includes('{')) {
-      return 'javascript'
-    }
-    return 'text'
+
+    return languageMap[languageId] || 'markdown'
   }
 
   /**
@@ -234,8 +243,8 @@ export class SearchService {
       for (const snippet of response.codeSnippets) {
         if (snippet.codeList?.length > 0) {
           const code = snippet.codeList[0].code
-          const language =
-            snippet.codeList[0].language || this.detectLanguage(code)
+          // 优先使用 API 提供的语言，否则使用当前编辑器的语言
+          const language = snippet.codeList[0].language || this.getCurrentEditorLanguage()
 
           const highlightedCode = await this.highlightCode(code, language)
 
