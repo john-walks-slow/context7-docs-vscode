@@ -24,15 +24,27 @@ export interface SearchResult {
  */
 export class SearchService {
   private _highlighter: Highlighter | null = null
-  private _currentTheme: string = 'dark'
+  private _currentTheme: string
   private _cache = new SearchCache()
   private _lastResults: SearchResult[] = []
 
   constructor() {
+    // 初始化时检查当前主题
+    this._currentTheme =
+      vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Light
+        ? 'light'
+        : 'dark'
+
     // 监听主题变化
     vscode.window.onDidChangeActiveColorTheme((theme) => {
-      this._currentTheme =
+      const newTheme =
         theme.kind === vscode.ColorThemeKind.Light ? 'light' : 'dark'
+
+      // 主题变化时，需要清除缓存并重新高亮
+      if (newTheme !== this._currentTheme) {
+        this._currentTheme = newTheme
+        this._cache.clear()
+      }
     })
   }
 
