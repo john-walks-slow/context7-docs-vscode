@@ -1,10 +1,20 @@
 import * as vscode from 'vscode'
 import { Context7Client } from './api/context7'
+import { LibraryService } from './services/LibraryService'
 import { DocSearchViewProvider } from './providers/DocSearchViewProvider'
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
   const client = new Context7Client(context.secrets)
-  const viewProvider = new DocSearchViewProvider(context, client)
+  const libraryService = new LibraryService(context, client)
+
+  // 初始化库列表（首次运行时合并预设库）
+  await libraryService.initialize()
+
+  const viewProvider = new DocSearchViewProvider(
+    context,
+    client,
+    libraryService,
+  )
 
   // 注册 Sidebar Webview View
   context.subscriptions.push(

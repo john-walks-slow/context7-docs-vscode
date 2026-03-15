@@ -33,10 +33,14 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
   private _currentLibraryName?: string
   private _currentQuery?: string
 
-  constructor(context: vscode.ExtensionContext, client: Context7Client) {
+  constructor(
+    context: vscode.ExtensionContext,
+    client: Context7Client,
+    libraryService: LibraryService,
+  ) {
     this._context = context
     this._client = client
-    this._libraryService = new LibraryService(context, this._client)
+    this._libraryService = libraryService
     this._searchService = new SearchService()
     this._historyService = new HistoryService(context)
     this._bookmarkService = new BookmarkService(context)

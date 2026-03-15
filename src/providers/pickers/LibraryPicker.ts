@@ -56,34 +56,17 @@ export class LibraryPicker {
    * 从列表中选择库（返回库信息）
    */
   async pickLibraryFromList(): Promise<LibraryInfo | undefined> {
-    const userLibraries = this._libraryService.getUserLibraries()
-
     const items: UserLibraryQuickPickItem[] = []
 
-    // 预设库
-    for (const lib of this._libraryService.getSortedPresets()) {
+    // 所有库（统一展示）
+    for (const lib of this._libraryService.getSortedLibraries()) {
       items.push({
         label: lib.name,
-        description: lib.description,
+        description: lib.id,
         libraryId: lib.id,
         libraryName: lib.name,
-        isUser: false,
+        isUser: true,
       })
-    }
-
-    // 用户库
-    if (userLibraries.length > 0) {
-      items.push(createLibrarySeparatorItem())
-
-      for (const lib of this._libraryService.getSortedUserLibraries()) {
-        items.push({
-          label: lib.name,
-          description: lib.id,
-          libraryId: lib.id,
-          libraryName: lib.name,
-          isUser: true,
-        })
-      }
     }
 
     // 操作
@@ -121,48 +104,25 @@ export class LibraryPicker {
     action: 'search' | 'manage',
     onSearch?: (libraryId: string, libraryName: string) => Promise<void>,
   ): Promise<void> {
-    const userLibraries = this._libraryService.getUserLibraries()
-
     const items: UserLibraryQuickPickItem[] = []
 
-    // 预设库（按字母排序）
-    for (const lib of this._libraryService.getSortedPresets()) {
+    // 所有库（统一展示，都可以编辑和删除）
+    for (const lib of this._libraryService.getSortedLibraries()) {
       items.push({
         label: lib.name,
-        description: lib.description,
+        description: lib.id,
         libraryId: lib.id,
         libraryName: lib.name,
-        isUser: false,
+        isUser: true,
         buttons: [
           {
             iconPath: new vscode.ThemeIcon('globe'),
             tooltip: 'Open in Context7',
           },
+          { iconPath: new vscode.ThemeIcon('edit'), tooltip: 'Edit ID' },
+          { iconPath: new vscode.ThemeIcon('trash'), tooltip: 'Remove' },
         ],
       })
-    }
-
-    // 用户库（分隔线后）
-    if (userLibraries.length > 0) {
-      items.push(createLibrarySeparatorItem())
-
-      for (const lib of this._libraryService.getSortedUserLibraries()) {
-        items.push({
-          label: lib.name,
-          description: lib.id,
-          libraryId: lib.id,
-          libraryName: lib.name,
-          isUser: true,
-          buttons: [
-            {
-              iconPath: new vscode.ThemeIcon('globe'),
-              tooltip: 'Open in Context7',
-            },
-            { iconPath: new vscode.ThemeIcon('edit'), tooltip: 'Edit ID' },
-            { iconPath: new vscode.ThemeIcon('trash'), tooltip: 'Remove' },
-          ],
-        })
-      }
     }
 
     // 分隔线和操作

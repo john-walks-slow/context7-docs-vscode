@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import { Context7Client } from '../api/context7'
-import { COMMON_LIBRARIES, type LibraryItem } from '../constants/libraries'
+import { COMMON_LIBRARIES } from '../constants/libraries'
 
 /**
  * 用户库数据结构
@@ -22,14 +22,49 @@ export interface LibraryInfo {
 /**
  * 库管理服务
  * 负责库的增删改查和持久化
+ *
+ * 设计原则：预设库仅在初始化时合并到用户库，之后所有操作都基于用户库
  */
 export class LibraryService {
   private readonly _context: vscode.ExtensionContext
   private readonly _client: Context7Client
+  private readonly INIT_KEY = 'userLibrariesInitialized'
 
   constructor(context: vscode.ExtensionContext, client: Context7Client) {
     this._context = context
     this._client = client
+  }
+
+  /**
+   * 初始化：首次运行时将预设库合并到用户库
+   * 只执行一次，之后用户可以自由管理
+   */
+  public async initialize(): Promise<void> {
+    const initialized = this._context.globalState.get<boolean>(
+      this.INIT_KEY,
+      false,
+    )
+    if (initialized) {
+      return
+    }
+
+    const libraries = this.getUserLibraries()
+    if (libraries.length === 0) {
+      // 首次运行，将预设库作为默认值
+      const defaultLibraries: UserLibrary[] = COMMON_LIBRARIES.map((lib) => ({
+        id: lib.id,
+        name: lib.name,
+        addedAt: Date.now(),
+      }))
+      await this._saveUserLibraries(defaultLibraries)
+      console.log(
+        '[Context7] Initialized with',
+        defaultLibraries.length,
+        'preset libraries',
+      )
+    }
+
+    await this._context.globalState.update(this.INIT_KEY, true)
   }
 
   /**
@@ -71,64 +106,32 @@ export class LibraryService {
   }
 
   /**
-   * 根据库名在 COMMON_LIBRARIES 和 UserLibraries 中查找
+   * 根据库名查找库（仅查用户库）
    */
   public findLibraryByName(name: string): LibraryInfo | undefined {
     const normalizedName = name.toLowerCase().replace(/^@/, '')
-
-    // 先查用户库
-    const userLibraries = this.getUserLibraries()
-    const userMatch = userLibraries.find(
+    const libraries = this.getUserLibraries()
+    const match = libraries.find(
       (lib) =>
         lib.name.toLowerCase() === normalizedName ||
         lib.name.toLowerCase().replace(/^@/, '') === normalizedName,
     )
-    if (userMatch) {
-      return { id: userMatch.id, name: userMatch.name }
-    }
-
-    // 再查预设库
-    const presetMatch = COMMON_LIBRARIES.find(
-      (lib) => lib.name.toLowerCase() === normalizedName,
-    )
-    if (presetMatch) {
-      return { id: presetMatch.id, name: presetMatch.name }
-    }
-
-    return undefined
+    return match ? { id: match.id, name: match.name } : undefined
   }
 
   /**
-   * 根据 ID 查找库
+   * 根据 ID 查找库（仅查用户库）
    */
   public findLibraryById(id: string): LibraryInfo | undefined {
-    // 查预设库
-    const presetMatch = COMMON_LIBRARIES.find((lib) => lib.id === id)
-    if (presetMatch) {
-      return { id: presetMatch.id, name: presetMatch.name }
-    }
-
-    // 查用户库
-    const userLibraries = this.getUserLibraries()
-    const userMatch = userLibraries.find((lib) => lib.id === id)
-    if (userMatch) {
-      return { id: userMatch.id, name: userMatch.name }
-    }
-
-    return undefined
+    const libraries = this.getUserLibraries()
+    const match = libraries.find((lib) => lib.id === id)
+    return match ? { id: match.id, name: match.name } : undefined
   }
 
   /**
-   * 获取所有预设库（按字母排序）
+   * 获取所有库（按字母排序）
    */
-  public getSortedPresets(): LibraryItem[] {
-    return [...COMMON_LIBRARIES].sort((a, b) => a.name.localeCompare(b.name))
-  }
-
-  /**
-   * 获取所有用户库（按字母排序）
-   */
-  public getSortedUserLibraries(): UserLibrary[] {
+  public getSortedLibraries(): UserLibrary[] {
     return [...this.getUserLibraries()].sort((a, b) =>
       a.name.localeCompare(b.name),
     )
