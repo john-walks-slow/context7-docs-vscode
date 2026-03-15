@@ -46,7 +46,11 @@ export class LibraryPicker {
       }
 
       if (choice.id === '__search__') {
-        return await this._libraryService.searchAndAddLibrary(searchName, true, true)
+        return await this._libraryService.searchAndAddLibrary(
+          searchName,
+          true,
+          true,
+        )
       }
       // 走列表选择
       return await this.pickLibraryFromList()
@@ -126,7 +130,8 @@ export class LibraryPicker {
         quickPick.hide()
 
         // 判断是否有匹配的库（非分隔线、非搜索项）
-        const hasMatchedLibrary = selected &&
+        const hasMatchedLibrary =
+          selected &&
           selected.libraryId &&
           selected.libraryId !== SEARCH_INPUT_ITEM_ID &&
           selected.libraryId !== '__search__' &&
@@ -300,7 +305,8 @@ export class LibraryPicker {
       quickPick.hide()
 
       // 判断是否有匹配的库（非分隔线、非搜索项）
-      const hasMatchedLibrary = selected &&
+      const hasMatchedLibrary =
+        selected &&
         selected.libraryId &&
         selected.libraryId !== SEARCH_INPUT_ITEM_ID &&
         selected.libraryId !== '__search__' &&

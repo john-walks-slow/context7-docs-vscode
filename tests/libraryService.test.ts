@@ -22,7 +22,9 @@ interface MockExtensionContext {
 /**
  * 将 Mock 上下文转换为 VS Code ExtensionContext
  */
-function asExtensionContext(ctx: MockExtensionContext): vscode.ExtensionContext {
+function asExtensionContext(
+  ctx: MockExtensionContext,
+): vscode.ExtensionContext {
   return ctx as unknown as vscode.ExtensionContext
 }
 
@@ -104,7 +106,10 @@ describe('DocSearchViewProvider - Library Management', () => {
     }
 
     mockClient = new Context7Client(mockContext.secrets)
-    provider = new DocSearchViewProvider(asExtensionContext(mockContext), mockClient)
+    provider = new DocSearchViewProvider(
+      asExtensionContext(mockContext),
+      mockClient,
+    )
   })
 
   afterEach(() => {
@@ -117,23 +122,23 @@ describe('DocSearchViewProvider - Library Management', () => {
     })
 
     it('should save libraries to settings', async () => {
-      const libraries = [
-        { id: '/facebook/react', name: 'react' },
-      ]
+      const libraries = [{ id: '/facebook/react', name: 'react' }]
 
-      await vscode.workspace.getConfiguration('context7').update('libraries', libraries)
+      await vscode.workspace
+        .getConfiguration('context7')
+        .update('libraries', libraries)
 
       expect(configUpdate).toHaveBeenCalledWith('libraries', libraries)
     })
 
     it('should retrieve libraries from settings', () => {
-      const libraries = [
-        { id: '/vuejs/vue', name: 'vue' },
-      ]
+      const libraries = [{ id: '/vuejs/vue', name: 'vue' }]
 
       configGet.mockReturnValue(libraries)
 
-      const result = vscode.workspace.getConfiguration('context7').get('libraries', [])
+      const result = vscode.workspace
+        .getConfiguration('context7')
+        .get('libraries', [])
 
       expect(result).toEqual(libraries)
     })
@@ -141,21 +146,23 @@ describe('DocSearchViewProvider - Library Management', () => {
     it('should handle empty libraries', () => {
       configGet.mockReturnValue([])
 
-      const result = vscode.workspace.getConfiguration('context7').get('libraries', [])
+      const result = vscode.workspace
+        .getConfiguration('context7')
+        .get('libraries', [])
 
       expect(result).toEqual([])
     })
 
     it('should add new library without duplicates', async () => {
-      const existingLibraries = [
-        { id: '/facebook/react', name: 'react' },
-      ]
+      const existingLibraries = [{ id: '/facebook/react', name: 'react' }]
 
       configGet.mockReturnValue(existingLibraries)
 
       const newLibrary = { id: '/vuejs/vue', name: 'vue' }
       const updatedLibraries = [...existingLibraries, newLibrary]
-      await vscode.workspace.getConfiguration('context7').update('libraries', updatedLibraries)
+      await vscode.workspace
+        .getConfiguration('context7')
+        .update('libraries', updatedLibraries)
 
       expect(configUpdate).toHaveBeenCalledWith('libraries', updatedLibraries)
     })
@@ -173,9 +180,7 @@ describe('DocSearchViewProvider - Library Management', () => {
     })
 
     it('should edit library id', async () => {
-      const libraries = [
-        { id: '/facebook/react', name: 'react' },
-      ]
+      const libraries = [{ id: '/facebook/react', name: 'react' }]
 
       const lib = libraries.find((l) => l.name === 'react')
       if (lib) {
@@ -198,8 +203,7 @@ describe('DocSearchViewProvider - Library Management', () => {
       const searchName = 'REACT'
       const libraryName = 'react'
 
-      const match =
-        searchName.toLowerCase() === libraryName.toLowerCase()
+      const match = searchName.toLowerCase() === libraryName.toLowerCase()
 
       expect(match).toBe(true)
     })
