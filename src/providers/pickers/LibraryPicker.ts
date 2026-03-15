@@ -222,7 +222,7 @@ export class LibraryPicker {
 
       items.push({
         label: '$(add) Add library by ID...',
-        description: 'Enter ID directly (e.g., /facebook/react)',
+        description: 'Enter ID directly (e.g., /reactjs/react.dev)',
         libraryId: '__addById__',
         libraryName: '',
         isUser: false,
