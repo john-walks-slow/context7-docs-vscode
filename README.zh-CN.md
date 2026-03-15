@@ -5,9 +5,9 @@
 [![VS Code](https://img.shields.io/badge/VS%20Code-1.101+-blue.svg)](https://code.visualstudio.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> (眼馋你的 AI 的 Context7 ？现在你也可以用了)
+使用 Context7 在 VS Code 中直接查询文档、代码示例和 API 说明。
 
-在 VS Code 中直接查询文档、代码示例和 API 说明。
+> (眼馋你的 AI 的 Context7 ？现在你也能用了)
 
 ## ✨ 特性
 

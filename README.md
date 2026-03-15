@@ -5,9 +5,9 @@
 [![VS Code](https://img.shields.io/badge/VS%20Code-1.101+-blue.svg)](https://code.visualstudio.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> AI has Context7 for instant docs. Now you do too.
-
 Query documentation using Context7 API directly in VS Code. Search library docs, code snippets, and examples.
+
+> AI has Context7 for instant docs. Now you do too.
 
 ## Features
 
@@ -21,17 +21,17 @@ Query documentation using Context7 API directly in VS Code. Search library docs,
 
 ## Getting Started
 
-**Via Sidebar:**
-
-- Open the Context7 panel in the sidebar (book icon)
-- Select a library or search for one
-- Enter your query
-
 **Via Selection:**
 
 - Select code in the editor
 - Right-click and choose "Context7: Search Selection"
 - The extension auto-detects the library and searches
+
+**Via Sidebar:**
+
+- Open the Context7 panel in the sidebar (book icon)
+- Select a library or search for one
+- Enter your query
 
 ## Supported Languages
 
