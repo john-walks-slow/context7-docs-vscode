@@ -112,6 +112,36 @@ describe('SearchCache', () => {
     })
   })
 
+  describe('delete', () => {
+    it('should delete specific cache entry', () => {
+      cache.set('/facebook/react', 'useState', mockResults)
+      cache.set('/vercel/next.js', 'routing', mockResults)
+
+      expect(cache.size).toBe(2)
+
+      const deleted = cache.delete('/facebook/react', 'useState')
+
+      expect(deleted).toBe(true)
+      expect(cache.size).toBe(1)
+      expect(cache.get('/facebook/react', 'useState')).toBeNull()
+      expect(cache.get('/vercel/next.js', 'routing')).toEqual(mockResults)
+    })
+
+    it('should return false when deleting non-existent entry', () => {
+      const deleted = cache.delete('/facebook/react', 'nonexistent')
+      expect(deleted).toBe(false)
+    })
+
+    it('should normalize query when deleting', () => {
+      cache.set('/facebook/react', 'useState', mockResults)
+
+      const deleted = cache.delete('/facebook/react', 'USESTATE')
+
+      expect(deleted).toBe(true)
+      expect(cache.get('/facebook/react', 'useState')).toBeNull()
+    })
+  })
+
   describe('size', () => {
     it('should return correct cache size', () => {
       expect(cache.size).toBe(0)
