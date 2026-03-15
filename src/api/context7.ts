@@ -127,7 +127,7 @@ export class Context7Client {
 
   /**
    * 获取 API Key
-   * 优先级: secrets > config (迁移) > .env
+   * 优先级: secrets > .env
    */
   async getApiKey(): Promise<string | undefined> {
     // 返回缓存的 API Key（如果已验证过）
@@ -135,29 +135,14 @@ export class Context7Client {
       return this.cachedApiKey
     }
 
-    // 优先从 secrets 获取
+    // 从 secrets 获取
     const secretKey = await this.secrets.get('context7.apiKey')
     if (secretKey) {
       this.cachedApiKey = secretKey
       return secretKey
     }
 
-    // 兼容旧配置（自动迁移）
-    const config = vscode.workspace.getConfiguration('context7')
-    const configKey = config.get<string>('apiKey')
-    if (configKey) {
-      // 迁移到 secrets
-      await this.secrets.store('context7.apiKey', configKey)
-      await config.update(
-        'apiKey',
-        undefined,
-        vscode.ConfigurationTarget.Global,
-      )
-      this.cachedApiKey = configKey
-      return configKey
-    }
-
-    // 最后检查 .env
+    // 检查 .env
     if (this.envApiKey) {
       return this.envApiKey
     }
