@@ -2,11 +2,27 @@ import * as vscode from 'vscode'
 import { extractLibraryFromPath } from '../constants/languagePaths'
 
 /**
+ * 检测详情
+ */
+interface DetectionDetails {
+  /** 检测方法：'lsp' | 'fallback' | 'none' */
+  method: 'lsp' | 'fallback' | 'none'
+  /** 定义文件路径（如果是 LSP 检测） */
+  definitionPath?: string
+  /** 匹配到的模式（如果有） */
+  matchedPattern?: string
+  /** 错误信息（如果有） */
+  error?: string
+}
+
+/**
  * 库信息
  */
-interface LibraryInfo {
+export interface LibraryInfo {
   name: string
   confidence: 'high' | 'low'
+  /** 检测详情 */
+  details: DetectionDetails
 }
 
 /**
@@ -18,25 +34,55 @@ export class LibraryDetector {
    */
   async detectLibraryFromSelection(): Promise<LibraryInfo | null> {
     const editor = vscode.window.activeTextEditor
-    if (!editor) {return null}
+    if (!editor) {
+      return null
+    }
 
     const selection = editor.selection
     const selectedText = editor.document.getText(selection).trim()
-    if (!selectedText) {return null}
+    if (!selectedText) {
+      return null
+    }
 
     // 尝试 LSP 追踪定义，传递当前文档的语言 ID
-    const library = await this.traceDefinition(
+    const lspResult = await this.traceDefinition(
       editor.document.uri,
       selection.start,
       editor.document.languageId,
     )
-    if (library) {
-      return { name: library, confidence: 'high' }
+
+    if (lspResult) {
+      return {
+        name: lspResult.libraryName,
+        confidence: 'high',
+        details: {
+          method: 'lsp',
+          definitionPath: lspResult.definitionPath,
+          matchedPattern: lspResult.matchedPattern,
+        },
+      }
     }
 
     // 回退：提取第一个标识符
     const identifier = this.extractFirstIdentifier(selectedText)
-    return identifier ? { name: identifier, confidence: 'low' } : null
+    if (identifier) {
+      return {
+        name: identifier,
+        confidence: 'low',
+        details: {
+          method: 'fallback',
+        },
+      }
+    }
+
+    return {
+      name: selectedText.slice(0, 50), // 限制长度
+      confidence: 'low',
+      details: {
+        method: 'none',
+        error: '无法解析选中的文本为有效标识符',
+      },
+    }
   }
 
   /**
@@ -46,19 +92,43 @@ export class LibraryDetector {
     uri: vscode.Uri,
     position: vscode.Position,
     languageId: string,
-  ): Promise<string | null> {
+  ): Promise<{
+    libraryName: string
+    definitionPath: string
+    matchedPattern?: string
+  } | null> {
     try {
       const definitions = await vscode.commands.executeCommand<
         vscode.Location[] | vscode.LocationLink[]
       >('vscode.executeDefinitionProvider', uri, position)
 
-      if (!definitions || definitions.length === 0) {return null}
+      if (!definitions || definitions.length === 0) {
+        console.log('[Context7] LSP: 未找到定义')
+        return null
+      }
 
       const definition = definitions[0]
-      const definitionUri = 'uri' in definition ? definition.uri : definition.targetUri
+      const definitionUri =
+        'uri' in definition ? definition.uri : definition.targetUri
+      const definitionPath = definitionUri.fsPath
+
+      console.log(`[Context7] LSP: 找到定义在 ${definitionPath}`)
+
       // 传递源文件的语言 ID，用于过滤匹配模式
-      return extractLibraryFromPath(definitionUri.fsPath, languageId)
-    } catch {
+      const libraryName = extractLibraryFromPath(definitionPath, languageId)
+
+      if (libraryName) {
+        console.log(`[Context7] LSP: 从路径提取到库名 "${libraryName}"`)
+        return { libraryName, definitionPath }
+      }
+
+      console.log(
+        `[Context7] LSP: 无法从路径 "${definitionPath}" 提取库名（语言: ${languageId}）`,
+      )
+      return null
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      console.error(`[Context7] LSP 错误: ${errorMsg}`)
       return null
     }
   }
