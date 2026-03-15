@@ -5,7 +5,7 @@
 [![VS Code](https://img.shields.io/badge/VS%20Code-1.101+-blue.svg)](https://code.visualstudio.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> Envious of your AI's Context7? Now you can have it too.
+> AI has Context7 for instant docs. Now you do too.
 
 Query documentation using Context7 API directly in VS Code. Search library docs, code snippets, and examples.
 
