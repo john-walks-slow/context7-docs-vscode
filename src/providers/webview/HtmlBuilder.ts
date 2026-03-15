@@ -39,6 +39,11 @@ export function buildHtml(options: HtmlOptions): string {
       <div class="tab" data-filter="code">Code <span class="badge" id="badge-code">0</span></div>
       <div class="tab" data-filter="info">Info <span class="badge" id="badge-info">0</span></div>
     </div>
+    <button class="wrap-toggle" id="wrapToggle" title="Toggle code wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 6h18M3 12h15a3 3 0 1 1 0 6h-3M3 18h7"/>
+      </svg>
+    </button>
     <button class="refresh-btn" id="refreshBtn" title="Refresh results" disabled>⟳</button>
   </div>
 
@@ -52,11 +57,21 @@ export function buildHtml(options: HtmlOptions): string {
   <script>
     const vscode = acquireVsCodeApi();
 
+    // 从 localStorage 恢复 wrap 状态
+    const savedWrapMode = localStorage.getItem('context7-wrap-mode') === 'true';
+    
     let state = {
       results: [],
       loading: false,
-      filter: 'all'
+      filter: 'all',
+      wrapMode: savedWrapMode
     };
+
+    // 初始化 wrap 模式
+    if (state.wrapMode) {
+      document.body.classList.add('wrap-mode');
+      document.getElementById('wrapToggle')?.classList.add('active');
+    }
 
     // Tab 点击
     document.getElementById('tabs').addEventListener('click', (e) => {
@@ -72,6 +87,15 @@ export function buildHtml(options: HtmlOptions): string {
     // Refresh 按钮
     document.getElementById('refreshBtn').addEventListener('click', () => {
       vscode.postMessage({ command: 'refresh' });
+    });
+
+    // Wrap 切换按钮
+    document.getElementById('wrapToggle')?.addEventListener('click', () => {
+      state.wrapMode = !state.wrapMode;
+      document.body.classList.toggle('wrap-mode', state.wrapMode);
+      document.getElementById('wrapToggle')?.classList.toggle('active', state.wrapMode);
+      localStorage.setItem('context7-wrap-mode', state.wrapMode);
+      vscode.postMessage({ command: 'setWrapMode', wrapMode: state.wrapMode });
     });
 
     function render() {

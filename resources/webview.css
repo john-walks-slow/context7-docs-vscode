@@ -34,8 +34,8 @@ body {
   border: none;
   color: var(--vscode-descriptionForeground);
   cursor: pointer;
-  font-size: 16px;
-  padding: 8px 12px;
+  font-size: 14px;
+  padding: 6px 8px;
   transition: all 0.15s;
   border-radius: 4px;
 }
@@ -52,6 +52,35 @@ body {
 .refresh-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Wrap Toggle Button */
+.wrap-toggle {
+  background: transparent;
+  border: none;
+  color: var(--vscode-descriptionForeground);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 6px 8px;
+  transition: all 0.15s;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.wrap-toggle:hover {
+  color: var(--vscode-editor-foreground);
+  background: var(--vscode-toolbar-hoverBackground);
+}
+
+.wrap-toggle.active {
+  color: var(--vscode-textLink-foreground);
+}
+
+.wrap-toggle svg {
+  width: 14px;
+  height: 14px;
 }
 
 .tab {
@@ -150,6 +179,37 @@ body {
   font-family: var(--vscode-editor-font-family);
   font-size: 12px;
   line-height: 1.5;
+}
+
+/* Wrap Mode - Auto wrap long lines */
+.wrap-mode .code-block .shiki {
+  overflow-x: visible;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.wrap-mode .code-block pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.wrap-mode .code-block code {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Wrap Mode - Info Content */
+.wrap-mode .info-content pre {
+  overflow-x: visible;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.wrap-mode .info-content pre code {
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 .code-block pre {
