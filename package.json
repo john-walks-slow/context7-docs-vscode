@@ -208,6 +208,8 @@
     "vscode:prepublish": "pnpm build",
     "build": "vite build",
     "watch": "vite build --watch",
+    "watch:tsc": "tsc --noEmit --watch",
+    "watch-tests": "vitest --watch",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "test": "vitest run",

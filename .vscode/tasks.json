@@ -1,28 +1,47 @@
 {
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "watch",
-      "type": "npm",
-      "script": "watch",
-      "isBackground": true,
-      "presentation": {
-        "reveal": "never"
-      },
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
-      "problemMatcher": [
-        {
-          "pattern": [],
-          "background": {
-            "activeOnStart": true,
-            "beginsPattern": ".*build started*",
-            "endsPattern": ".*built in.*"
-          }
-        }
-      ]
-    }
-  ]
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "watch",
+			"type": "npm",
+			"script": "watch",
+			"isBackground": true,
+			"presentation": {
+				"reveal": "never"
+			},
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"problemMatcher": {
+				"pattern": [],
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "build started",
+					"endsPattern": "built in"
+				}
+			}
+		},
+		{
+			"label": "watch:tsc",
+			"type": "npm",
+			"script": "watch:tsc",
+			"group": "build",
+			"problemMatcher": "$tsc-watch",
+			"isBackground": true,
+			"presentation": {
+				"reveal": "never"
+			}
+		},
+		{
+			"type": "npm",
+			"script": "watch-tests",
+			"problemMatcher": "$tsc-watch",
+			"isBackground": true,
+			"presentation": {
+				"reveal": "never"
+			},
+			"group": "build"
+		}
+	]
 }
