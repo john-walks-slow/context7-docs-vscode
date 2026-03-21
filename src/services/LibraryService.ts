@@ -304,19 +304,22 @@ export class LibraryService {
           continue
         }
 
-        // Auto-associate keyword with library
-        // Use keywordToBind if provided, otherwise use search keyword
-        const keywordForBinding = keywordToBind || keyword
-        await this.addLibrary(selected.libraryId, selected.libraryTitle, [
-          keywordForBinding.toLowerCase(),
-        ])
+        // 只在明确指定 keywordToBind 时才绑定关键词
+        // 用户自由搜索时不自动绑定
+        if (keywordToBind) {
+          await this.addLibrary(selected.libraryId, selected.libraryTitle, [
+            keywordToBind.toLowerCase(),
+          ])
+        } else {
+          await this.addLibrary(selected.libraryId, selected.libraryTitle)
+        }
 
         return {
           library: {
             id: selected.libraryId,
             name: selected.libraryTitle,
           },
-          keyword: keywordForBinding,
+          keyword: keywordToBind || keyword,
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error'
