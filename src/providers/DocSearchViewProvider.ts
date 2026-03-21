@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import { Context7Client } from '../api/context7'
-import { LibraryService, type LibraryInfo } from '../services/LibraryService'
+import { LibraryService } from '../services/LibraryService'
 import { SearchService } from '../services/SearchService'
 import { HistoryService } from '../services/HistoryService'
 import { BookmarkService } from '../services/BookmarkService'
@@ -77,6 +77,9 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
       vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Light
         ? 'light'
         : 'dark'
+
+    // 设置默认标题
+    webviewView.title = 'Context7 Docs'
 
     webviewView.webview.options = {
       enableScripts: true,
@@ -235,8 +238,23 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
     }
 
     console.log('[Context7] Sending loading message to webview')
+
+    // 保存当前状态用于失败回滚
+    const previousLibraryId = this._currentLibraryId
+    const previousLibraryName = this._currentLibraryName
+    const previousQuery = this._currentQuery
+
+    // 提前获取库名称并更新状态
+    const library = this._libraryService.findLibraryById(libraryId)
+    const libraryName = library?.name || libraryId
+
     this._currentLibraryId = libraryId
     this._currentQuery = query
+    this._currentLibraryName = libraryName
+
+    // 更新 Sidebar 标题
+    this._view.title = libraryName
+
     this._view.webview.postMessage({ command: 'loading' })
 
     try {
@@ -249,27 +267,23 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
       )
       console.log('[Context7] Search completed, results:', results.length)
 
-      // 获取库名称
-      const library = this._libraryService.findLibraryById(libraryId)
-      this._currentLibraryName = library?.name || libraryId
-
-      // 更新 Sidebar 标题为当前库名
-      if (this._view) {
-        this._view.title = this._currentLibraryName
-      }
-
       // 记录搜索历史
-      await this._historyService.addHistory(
-        libraryId,
-        this._currentLibraryName,
-        query,
-      )
+      await this._historyService.addHistory(libraryId, libraryName, query)
 
       console.log('[Context7] Sending results to webview')
       this._view.webview.postMessage({ command: 'results', results })
       this._sendHistoryUpdate()
     } catch (error) {
       console.error('[Context7] Search error:', error)
+
+      // 回滚状态
+      this._currentLibraryId = previousLibraryId
+      this._currentLibraryName = previousLibraryName
+      this._currentQuery = previousQuery
+
+      // 回滚标题
+      this._view.title = previousLibraryName || 'Context7 Docs'
+
       this._view.webview.postMessage({
         command: 'error',
         message: error instanceof Error ? error.message : 'Unknown error',

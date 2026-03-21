@@ -143,123 +143,63 @@
       "properties": {
         "context7.libraries": {
           "type": "array",
-          "default": [
-            {
-              "id": "/websites/react_dev",
-              "name": "react"
-            },
-            {
-              "id": "/vuejs/vue",
-              "name": "vue"
-            },
-            {
-              "id": "/microsoft/TypeScript",
-              "name": "typescript"
-            },
-            {
-              "id": "/vercel/next.js",
-              "name": "next.js"
-            },
-            {
-              "id": "/tailwindlabs/tailwindcss",
-              "name": "tailwindcss"
-            },
-            {
-              "id": "/vitejs/vite",
-              "name": "vite"
-            },
-            {
-              "id": "/prisma/prisma",
-              "name": "prisma"
-            },
-            {
-              "id": "/colinhacks/zod",
-              "name": "zod"
+          "default": [],
+          "description": "User-defined libraries for documentation search. Libraries will appear before preset libraries in the picker.",
+          "scope": "application",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "name"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Context7 library ID (e.g., '/facebook/react', '/vuejs/docs')"
+              },
+              "name": {
+                "type": "string",
+                "description": "Display name shown in library picker"
+              },
+              "description": {
+                "type": "string",
+                "description": "Brief description of the library"
+              },
+              "keywords": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Keywords for library matching"
+              }
             }
-          ],
-          "description": "Library list for documentation search. Each item requires 'id' and 'name' properties.",
-          "scope": "application"
+          }
         },
         "context7.pathPatterns": {
           "type": "array",
-          "default": [
-            {
-              "languages": [
-                "javascript",
-                "typescript",
-                "javascriptreact",
-                "typescriptreact",
-                "vue"
-              ],
-              "pattern": ".*node_modules/@types/([^/]+)"
-            },
-            {
-              "languages": [
-                "javascript",
-                "typescript",
-                "javascriptreact",
-                "typescriptreact",
-                "vue"
-              ],
-              "pattern": ".*node_modules/(@[^/]+/[^/]+|[^/]+)"
-            },
-            {
-              "languages": [
-                "python"
-              ],
-              "pattern": ".*site-packages/([^/]+)"
-            },
-            {
-              "languages": [
-                "go"
-              ],
-              "pattern": ".*pkg/mod/(.+)@"
-            },
-            {
-              "languages": [
-                "rust"
-              ],
-              "pattern": ".*registry/src/[^/]+/(.+)-\\d+\\.\\d+"
-            },
-            {
-              "languages": [
-                "java"
-              ],
-              "pattern": ".*\\.m2/repository/(.+/[^/]+)/\\d"
-            },
-            {
-              "languages": [
-                "java"
-              ],
-              "pattern": ".*\\.gradle/caches/modules-\\d+/files-\\d+\\.\\d+/([^/]+/[^/]+)"
-            },
-            {
-              "languages": [
-                "csharp"
-              ],
-              "pattern": ".*[/\\\\](?:\\.nuget/packages|packages)[/\\\\]([^/\\\\]+)"
-            },
-            {
-              "languages": [
-                "ruby"
-              ],
-              "pattern": ".*gems/(.+)-\\d+\\.\\d+"
-            },
-            {
-              "languages": [
-                "php"
-              ],
-              "pattern": ".*vendor/([^/]+/[^/]+)"
-            },
-            {
-              "languages": [
-                "dart"
-              ],
-              "pattern": ".*(?:\\.pub-cache|Pub/Cache)/hosted/[^/]+/(.+)-\\d+\\.\\d+"
+          "default": [],
+          "description": "Path patterns to extract library names from definition file paths. User patterns are prepended to built-in defaults.",
+          "scope": "application",
+          "items": {
+            "type": "object",
+            "required": [
+              "languages",
+              "pattern"
+            ],
+            "properties": {
+              "languages": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "VS Code language IDs this pattern applies to (e.g., 'typescript', 'python')"
+              },
+              "pattern": {
+                "type": "string",
+                "description": "Regex pattern with a capture group to extract library name from file path"
+              }
             }
-          ],
-          "description": "Path patterns to extract library names from definition file paths. Each item has 'languages' (array) and 'pattern' (regex string). User patterns are prepended to defaults.",
-          "scope": "application"
+          }
         }
       }
     }

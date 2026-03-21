@@ -83,25 +83,29 @@ export class LibraryPicker {
           )
         : libraryItems
 
-      // 无搜索输入时，按最近使用排序并添加分隔线
+      // 无搜索输入时，按 Recent/User/Preset 分组
       if (!filter) {
         const recentLibraries = this._libraryService.getRecentLibraries()
         const recentIds = new Set(recentLibraries.map((lib) => lib.id))
 
-        if (recentIds.size > 0) {
-          // 分离最近使用和其他库
-          const recentItems: UserLibraryQuickPickItem[] = []
-          const otherItems: UserLibraryQuickPickItem[] = []
+        // 分离：最近使用、用户库、预设库
+        const recentItems: UserLibraryQuickPickItem[] = []
+        const userItems: UserLibraryQuickPickItem[] = []
+        const presetItems: UserLibraryQuickPickItem[] = []
 
-          for (const item of filtered) {
-            if (recentIds.has(item.libraryId)) {
-              recentItems.push(item)
-            } else {
-              otherItems.push(item)
-            }
+        for (const item of filtered) {
+          if (recentIds.has(item.libraryId)) {
+            recentItems.push(item)
           }
+          if (item.isUser) {
+            userItems.push(item)
+          } else {
+            presetItems.push(item)
+          }
+        }
 
-          // 按最近使用顺序排序（最近的在前）
+        // Recent - 按使用时间排序
+        if (recentItems.length > 0) {
           recentItems.sort((a, b) => {
             const aIndex = recentLibraries.findIndex(
               (lib) => lib.id === a.libraryId,
@@ -111,23 +115,40 @@ export class LibraryPicker {
             )
             return aIndex - bIndex
           })
+          items.push({
+            label: this._i18n.t('label.recentLibraries'),
+            kind: vscode.QuickPickItemKind.Separator,
+            libraryId: '',
+            libraryName: '',
+            isUser: false,
+          })
+          items.push(...recentItems)
+        }
 
-          // 添加最近使用的库
-          if (recentItems.length > 0) {
-            items.push({
-              label: this._i18n.t('label.recentLibraries'),
-              kind: vscode.QuickPickItemKind.Separator,
-              libraryId: '',
-              libraryName: '',
-              isUser: false,
-            })
-            items.push(...recentItems)
-          }
+        // User - 按首字母排序
+        if (userItems.length > 0) {
+          userItems.sort((a, b) => a.label.localeCompare(b.label))
+          items.push({
+            label: this._i18n.t('label.userLibraries'),
+            kind: vscode.QuickPickItemKind.Separator,
+            libraryId: '',
+            libraryName: '',
+            isUser: false,
+          })
+          items.push(...userItems)
+        }
 
-          // 添加其他库（无分隔线）
-          items.push(...otherItems)
-        } else {
-          items.push(...filtered)
+        // Preset - 按首字母排序
+        if (presetItems.length > 0) {
+          presetItems.sort((a, b) => a.label.localeCompare(b.label))
+          items.push({
+            label: this._i18n.t('label.presetLibraries'),
+            kind: vscode.QuickPickItemKind.Separator,
+            libraryId: '',
+            libraryName: '',
+            isUser: false,
+          })
+          items.push(...presetItems)
         }
       } else {
         items.push(...filtered)
@@ -204,9 +225,12 @@ export class LibraryPicker {
         event.button.tooltip === this._i18n.t('command.editBookmark')
       ) {
         // 打开 settings.json 并定位到 context7.libraries
-        await vscode.commands.executeCommand('workbench.action.openSettingsJson', {
-          revealSetting: { key: 'context7.libraries', edit: true },
-        })
+        await vscode.commands.executeCommand(
+          'workbench.action.openSettingsJson',
+          {
+            revealSetting: { key: 'context7.libraries', edit: true },
+          },
+        )
         quickPick.hide()
       }
     })
@@ -271,9 +295,12 @@ export class LibraryPicker {
 
       // Edit in settings
       if (selected?.libraryId === '__editInSettings__') {
-        await vscode.commands.executeCommand('workbench.action.openSettingsJson', {
-          revealSetting: { key: 'context7.libraries', edit: true },
-        })
+        await vscode.commands.executeCommand(
+          'workbench.action.openSettingsJson',
+          {
+            revealSetting: { key: 'context7.libraries', edit: true },
+          },
+        )
         return
       }
     })

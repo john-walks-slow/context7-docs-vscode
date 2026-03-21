@@ -56,6 +56,8 @@
   "label.searchIn": "在 Context7 中搜索 \"{query}\"...",
   "label.searchAndAddLibrary": "搜索并添加库...",
   "label.recentLibraries": "最近使用",
+  "label.userLibraries": "用户库",
+  "label.presetLibraries": "预设库",
   "label.addTags": "添加标签（逗号分隔）",
   "label.addNote": "添加备注（可选）",
   "label.searching": "正在搜索 \"{name}\"...",
