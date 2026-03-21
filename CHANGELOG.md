@@ -23,6 +23,7 @@
 - Reduced max recent libraries from 5 to 1 (most recent only)
 - Added JSON schema for `context7.libraries` and `context7.pathPatterns` settings
 - Library settings now respect VS Code Profile scope (no longer forced to Global)
+- Library settings storage reverted to Global scope for cross-profile consistency
 
 ### Fixed
 

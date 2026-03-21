@@ -396,10 +396,13 @@ export class LibraryService {
 
   /**
    * Save libraries to settings
-   * Note: 不指定 target 让 VS Code 自动选择当前作用域（支持 Profile）
    */
   private async _saveLibraries(libraries: Library[]): Promise<void> {
     const config = vscode.workspace.getConfiguration('context7')
-    await config.update('libraries', libraries)
+    await config.update(
+      'libraries',
+      libraries,
+      vscode.ConfigurationTarget.Global,
+    )
   }
 }
