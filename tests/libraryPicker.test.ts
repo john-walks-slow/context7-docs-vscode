@@ -181,7 +181,7 @@ describe('LibraryPicker', () => {
       expect(vscode.window.showInputBox).not.toHaveBeenCalled()
     })
 
-    it('选择 "Search library..." 时调用 searchAndSelectLibrary 然后 onSearch', async () => {
+    it('选择 "Search and add library..." 时调用 searchAndSelectLibrary 然后 onSearch', async () => {
       const onSearch = vi.fn()
       const mockResult = {
         library: { id: '/lodash/lodash', name: 'lodash' },
@@ -204,22 +204,23 @@ describe('LibraryPicker', () => {
       expect(onSearch).toHaveBeenCalledWith('/lodash/lodash', 'lodash')
     })
 
-    it('选择 "Add library by ID..." 时调用 addLibraryById 然后 onSearch', async () => {
+    it('选择 "Edit in Settings" 时打开 settings.json', async () => {
       const onSearch = vi.fn()
-      const mockResult: LibraryInfo = { id: '/custom/lib', name: 'lib' }
-      vi.mocked(mockLibraryService.addLibraryById).mockResolvedValue(mockResult)
 
       const promise = libraryPicker.selectLibrary('search', onSearch)
       const qp = currentQuickPick
 
-      const addByIdOption = qp.items.find(
-        (i: any) => i.libraryId === '__addById__',
+      const editOption = qp.items.find(
+        (i: any) => i.libraryId === '__editInSettings__',
       )
-      await qp._selectItem(addByIdOption)
+      await qp._selectItem(editOption)
       await promise
 
-      expect(mockLibraryService.addLibraryById).toHaveBeenCalledWith()
-      expect(onSearch).toHaveBeenCalledWith('/custom/lib', 'lib')
+      expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+        'workbench.action.openSettingsJson',
+        { revealSetting: { key: 'context7.libraries', edit: true } },
+      )
+      expect(onSearch).not.toHaveBeenCalled()
     })
 
     it('searchAndSelectLibrary 返回 undefined 时不调用 onSearch', async () => {
@@ -333,11 +334,7 @@ describe('LibraryPicker', () => {
       )
     })
 
-    it('点击 "Edit ID" 按钮编辑库 ID', async () => {
-      vi.mocked(vscode.window.showInputBox).mockResolvedValue(
-        '/axios/axios-new',
-      )
-
+    it('点击 "Edit ID" 按钮打开 settings.json', async () => {
       const promise = libraryPicker.selectLibrary('search')
       const qp = currentQuickPick
 
@@ -347,9 +344,9 @@ describe('LibraryPicker', () => {
       await qp._clickButton(axiosItem, { tooltip: 'command.editBookmark' })
       await promise
 
-      expect(mockLibraryService.editLibrary).toHaveBeenCalledWith(
-        'axios',
-        '/axios/axios-new',
+      expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
+        'workbench.action.openSettingsJson',
+        { revealSetting: { key: 'context7.libraries', edit: true } },
       )
     })
 
@@ -443,7 +440,7 @@ describe('LibraryPicker', () => {
           i.isUser ||
           i.libraryId === '__search_input__' ||
           i.libraryId === '__search__' ||
-          i.libraryId === '__addById__',
+          i.libraryId === '__editInSettings__',
       )
       expect(
         libraryItems.some((i: any) => i.libraryId === '/facebook/react'),

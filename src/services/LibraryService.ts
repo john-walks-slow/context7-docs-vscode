@@ -4,9 +4,6 @@ import { PRESET_LIBRARIES } from '../constants/libraries'
 import { I18nService } from './I18nService'
 import type { Library, LibraryInfo } from '../types'
 
-// 重新导出类型供外部使用
-export type { LibraryInfo } from '../types'
-
 /**
  * Library management service
  * Handles library CRUD operations and keyword resolution
@@ -187,29 +184,23 @@ export class LibraryService {
 
   /**
    * Get all libraries (presets + user libraries, sorted)
-   * User libraries come before preset libraries
    */
   public getSortedLibraries(): Library[] {
     const userLibraries = this.getLibraries()
     const userIds = new Set(userLibraries.map((l) => l.id))
 
-    // User libraries (sorted by name)
-    const userLibs = userLibraries
-      .slice()
-      .sort((a, b) => a.name.localeCompare(b.name))
-
-    // Preset libraries not in user list (sorted by name)
-    const presetLibs = PRESET_LIBRARIES.filter((l) => !userIds.has(l.id))
-      .map((l) => ({
+    // Combine: user libraries + preset libraries (not in user list)
+    const allLibraries = [
+      ...userLibraries,
+      ...PRESET_LIBRARIES.filter((l) => !userIds.has(l.id)).map((l) => ({
         id: l.id,
         name: l.name,
         keywords: l.keywords,
         isPreset: true,
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name))
+      })),
+    ]
 
-    // User libraries first, then presets
-    return [...userLibs, ...presetLibs]
+    return allLibraries.sort((a, b) => a.name.localeCompare(b.name))
   }
 
   /**
@@ -390,29 +381,6 @@ export class LibraryService {
         return undefined
       }
     }
-  }
-
-  /**
-   * Add library by ID directly
-   */
-  public async addLibraryById(): Promise<LibraryInfo | undefined> {
-    const id = await vscode.window.showInputBox({
-      prompt: I18nService.instance.t('prompt.enterLibraryId'),
-      placeHolder: I18nService.instance.t('placeholder.enterLibraryId'),
-      value: '/',
-    })
-
-    if (!id || !id.startsWith('/')) {
-      return undefined
-    }
-
-    const name = id.split('/').pop() || id
-    await this.addLibrary(id, name)
-    vscode.window.showInformationMessage(
-      I18nService.instance.t('message.libraryAddedById', { name }),
-    )
-
-    return { id, name }
   }
 
   /**

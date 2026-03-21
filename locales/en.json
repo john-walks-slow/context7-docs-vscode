@@ -54,8 +54,7 @@
 
   "label.search": "Search",
   "label.searchIn": "Search \"{query}\" in Context7...",
-  "label.searchLibrary": "Search library...",
-  "label.addLibraryById": "Add library by ID...",
+  "label.searchAndAddLibrary": "Search and add library...",
   "label.recentLibraries": "Recent",
   "label.addTags": "Add tags (comma-separated)",
   "label.addNote": "Add a note (optional)",
@@ -66,6 +65,7 @@
   "label.searchDifferentKeyword": "Search with different keyword",
   "label.cancelSearch": "Cancel",
   "label.tryAgain": "Try Again",
+  "label.editInSettings": "Edit in Settings",
   "description.tryAnotherSearch": "Try another search term",
   "description.exitSearch": "Exit search",
 
@@ -76,7 +76,7 @@
 
   "description.resolveLibrary": "Resolve library ID and add",
   "description.searchAddLibrary": "Search by name and add to list",
-  "description.enterIdDirectly": "Enter ID directly (e.g., /reactjs/react.dev)",
+  "description.editInSettings": "Edit library list directly in settings.json",
 
   "webview.searchDocumentation": "Search documentation",
   "webview.clickSearchHint": "Click the search icon above or run \"Context7: Search Documentation\"",

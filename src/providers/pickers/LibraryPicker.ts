@@ -33,7 +33,9 @@ export class LibraryPicker {
     const allLibraries = this._libraryService.getSortedLibraries()
     // manage 模式只显示用户库（非预设库）
     const libraries =
-      action === 'manage' ? allLibraries.filter((lib) => !lib.isPreset) : allLibraries
+      action === 'manage'
+        ? allLibraries.filter((lib) => !lib.isPreset)
+        : allLibraries
     const libraryItems: UserLibraryQuickPickItem[] = libraries.map((lib) => {
       const isUser = !lib.isPreset
       return {
@@ -81,39 +83,55 @@ export class LibraryPicker {
           )
         : libraryItems
 
-      // 无搜索输入时，显示最近使用的库
+      // 无搜索输入时，按最近使用排序并添加分隔线
       if (!filter) {
         const recentLibraries = this._libraryService.getRecentLibraries()
-        if (recentLibraries.length > 0) {
-          // 最近使用的分隔线
-          items.push({
-            label: this._i18n.t('label.recentLibraries'),
-            kind: vscode.QuickPickItemKind.Separator,
-            libraryId: '',
-            libraryName: '',
-            isUser: false,
+        const recentIds = new Set(recentLibraries.map((lib) => lib.id))
+
+        if (recentIds.size > 0) {
+          // 分离最近使用和其他库
+          const recentItems: UserLibraryQuickPickItem[] = []
+          const otherItems: UserLibraryQuickPickItem[] = []
+
+          for (const item of filtered) {
+            if (recentIds.has(item.libraryId)) {
+              recentItems.push(item)
+            } else {
+              otherItems.push(item)
+            }
+          }
+
+          // 按最近使用顺序排序（最近的在前）
+          recentItems.sort((a, b) => {
+            const aIndex = recentLibraries.findIndex(
+              (lib) => lib.id === a.libraryId,
+            )
+            const bIndex = recentLibraries.findIndex(
+              (lib) => lib.id === b.libraryId,
+            )
+            return aIndex - bIndex
           })
 
-          // 最近使用的库（带 clock 图标）
-          for (const lib of recentLibraries) {
+          // 添加最近使用的库
+          if (recentItems.length > 0) {
             items.push({
-              label: `$(clock) ${lib.name}`,
-              description: lib.id,
-              libraryId: lib.id,
-              libraryName: lib.name,
+              label: this._i18n.t('label.recentLibraries'),
+              kind: vscode.QuickPickItemKind.Separator,
+              libraryId: '',
+              libraryName: '',
               isUser: false,
-              buttons: [
-                {
-                  iconPath: new vscode.ThemeIcon('globe'),
-                  tooltip: this._i18n.t('command.openInBrowser'),
-                },
-              ],
             })
+            items.push(...recentItems)
           }
-        }
-      }
 
-      items.push(...filtered)
+          // 添加其他库（无分隔线）
+          items.push(...otherItems)
+        } else {
+          items.push(...filtered)
+        }
+      } else {
+        items.push(...filtered)
+      }
 
       // 分隔线和操作
       items.push(createLibrarySeparatorItem())
@@ -130,7 +148,7 @@ export class LibraryPicker {
       }
 
       items.push({
-        label: `$(search) ${this._i18n.t('label.searchLibrary')}`,
+        label: `$(search) ${this._i18n.t('label.searchAndAddLibrary')}`,
         description: this._i18n.t('description.searchAddLibrary'),
         libraryId: '__search__',
         libraryName: '',
@@ -138,9 +156,9 @@ export class LibraryPicker {
       })
 
       items.push({
-        label: `$(add) ${this._i18n.t('label.addLibraryById')}`,
-        description: this._i18n.t('description.enterIdDirectly'),
-        libraryId: '__addById__',
+        label: `$(gear) ${this._i18n.t('label.editInSettings')}`,
+        description: this._i18n.t('description.editInSettings'),
+        libraryId: '__editInSettings__',
         libraryName: '',
         isUser: false,
       })
@@ -185,14 +203,11 @@ export class LibraryPicker {
       } else if (
         event.button.tooltip === this._i18n.t('command.editBookmark')
       ) {
-        const newId = await vscode.window.showInputBox({
-          prompt: this._i18n.t('message.editIdFor', { name: item.libraryName }),
-          value: item.libraryId,
-          placeHolder: this._i18n.t('placeholder.enterLibraryId'),
+        // 打开 settings.json 并定位到 context7.libraries
+        await vscode.commands.executeCommand('workbench.action.openSettingsJson', {
+          revealSetting: { key: 'context7.libraries', edit: true },
         })
-        if (newId && newId !== item.libraryId) {
-          await this._libraryService.editLibrary(item.libraryName, newId)
-        }
+        quickPick.hide()
       }
     })
 
@@ -207,7 +222,7 @@ export class LibraryPicker {
         selected.libraryId &&
         selected.libraryId !== SEARCH_INPUT_ITEM_ID &&
         selected.libraryId !== '__search__' &&
-        selected.libraryId !== '__addById__' &&
+        selected.libraryId !== '__editInSettings__' &&
         selected.kind !== vscode.QuickPickItemKind.Separator
 
       if (hasMatchedLibrary) {
@@ -241,7 +256,7 @@ export class LibraryPicker {
         return
       }
 
-      // Selected "Search library..." option → show input box
+      // Selected "Search and add library..." option
       if (selected?.libraryId === '__search__') {
         const result = await this._libraryService.searchAndSelectLibrary()
         if (result && action === 'search' && onSearch) {
@@ -254,13 +269,11 @@ export class LibraryPicker {
         return
       }
 
-      // Add by ID
-      if (selected?.libraryId === '__addById__') {
-        const result = await this._libraryService.addLibraryById()
-        if (result && action === 'search' && onSearch) {
-          await this._libraryService.addRecentLibrary(result.id, result.name)
-          await onSearch(result.id, result.name)
-        }
+      // Edit in settings
+      if (selected?.libraryId === '__editInSettings__') {
+        await vscode.commands.executeCommand('workbench.action.openSettingsJson', {
+          revealSetting: { key: 'context7.libraries', edit: true },
+        })
         return
       }
     })
