@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed sidebar not opening automatically when triggering search commands
+
 ## [0.2.0] - 2026-03-21
 
 ### Added

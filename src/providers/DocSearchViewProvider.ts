@@ -221,9 +221,9 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
   private async _handleSearch(libraryId: string, query: string): Promise<void> {
     console.log('[Context7] _handleSearch called:', { libraryId, query })
 
-    // 如果视图未打开，先打开侧边栏
-    if (!this._view) {
-      console.log('[Context7] View not initialized, opening sidebar...')
+    // 如果视图未打开或不可见，先打开侧边栏
+    if (!this._view || !this._view.visible) {
+      console.log('[Context7] View not visible, opening sidebar...')
       await vscode.commands.executeCommand('context7.search.focus')
       // 等待视图初始化
       await new Promise((resolve) => setTimeout(resolve, 100))
