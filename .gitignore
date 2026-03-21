@@ -19,3 +19,4 @@ node_modules/
 examples
 .worktrees/
 .playwright-mcp
+build

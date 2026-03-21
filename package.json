@@ -150,17 +150,80 @@
         "context7.pathPatterns": {
           "type": "array",
           "default": [
-            { "languages": ["javascript", "typescript", "javascriptreact", "typescriptreact", "vue"], "pattern": ".*node_modules/@types/([^/]+)" },
-            { "languages": ["javascript", "typescript", "javascriptreact", "typescriptreact", "vue"], "pattern": ".*node_modules/(@[^/]+/[^/]+|[^/]+)" },
-            { "languages": ["python"], "pattern": ".*site-packages/([^/]+)" },
-            { "languages": ["go"], "pattern": ".*pkg/mod/(.+)@" },
-            { "languages": ["rust"], "pattern": ".*registry/src/[^/]+/(.+)-\\d+\\.\\d+" },
-            { "languages": ["java"], "pattern": ".*\\.m2/repository/(.+/[^/]+)/\\d" },
-            { "languages": ["java"], "pattern": ".*\\.gradle/caches/modules-\\d+/files-\\d+\\.\\d+/([^/]+/[^/]+)" },
-            { "languages": ["csharp"], "pattern": ".*[/\\\\](?:\\.nuget/packages|packages)[/\\\\]([^/\\\\]+)" },
-            { "languages": ["ruby"], "pattern": ".*gems/(.+)-\\d+\\.\\d+" },
-            { "languages": ["php"], "pattern": ".*vendor/([^/]+/[^/]+)" },
-            { "languages": ["dart"], "pattern": ".*(?:\\.pub-cache|Pub/Cache)/hosted/[^/]+/(.+)-\\d+\\.\\d+" }
+            {
+              "languages": [
+                "javascript",
+                "typescript",
+                "javascriptreact",
+                "typescriptreact",
+                "vue"
+              ],
+              "pattern": ".*node_modules/@types/([^/]+)"
+            },
+            {
+              "languages": [
+                "javascript",
+                "typescript",
+                "javascriptreact",
+                "typescriptreact",
+                "vue"
+              ],
+              "pattern": ".*node_modules/(@[^/]+/[^/]+|[^/]+)"
+            },
+            {
+              "languages": [
+                "python"
+              ],
+              "pattern": ".*site-packages/([^/]+)"
+            },
+            {
+              "languages": [
+                "go"
+              ],
+              "pattern": ".*pkg/mod/(.+)@"
+            },
+            {
+              "languages": [
+                "rust"
+              ],
+              "pattern": ".*registry/src/[^/]+/(.+)-\\d+\\.\\d+"
+            },
+            {
+              "languages": [
+                "java"
+              ],
+              "pattern": ".*\\.m2/repository/(.+/[^/]+)/\\d"
+            },
+            {
+              "languages": [
+                "java"
+              ],
+              "pattern": ".*\\.gradle/caches/modules-\\d+/files-\\d+\\.\\d+/([^/]+/[^/]+)"
+            },
+            {
+              "languages": [
+                "csharp"
+              ],
+              "pattern": ".*[/\\\\](?:\\.nuget/packages|packages)[/\\\\]([^/\\\\]+)"
+            },
+            {
+              "languages": [
+                "ruby"
+              ],
+              "pattern": ".*gems/(.+)-\\d+\\.\\d+"
+            },
+            {
+              "languages": [
+                "php"
+              ],
+              "pattern": ".*vendor/([^/]+/[^/]+)"
+            },
+            {
+              "languages": [
+                "dart"
+              ],
+              "pattern": ".*(?:\\.pub-cache|Pub/Cache)/hosted/[^/]+/(.+)-\\d+\\.\\d+"
+            }
           ],
           "description": "Path patterns to extract library names from definition file paths. Each item has 'languages' (array) and 'pattern' (regex string). User patterns are prepended to defaults.",
           "scope": "application"
@@ -178,7 +241,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "pack:vsix": "vsce package --no-dependencies",
-    "publish:vsix": "vsce publish --no-dependencies"
+    "publish:vsix": "vsce publish --no-dependencies -o build/<name>-<version>.vsix"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

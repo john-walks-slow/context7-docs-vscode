@@ -37,3 +37,4 @@ scripts/
 *.vsix
 .learning
 examples/
+build
