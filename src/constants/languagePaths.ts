@@ -30,6 +30,16 @@ export interface PathPattern {
   pattern: RegExp
 }
 
+/** 标准库路径检测模式 */
+interface StdlibPattern {
+  /** 语言 ID（单个或多个） */
+  languageId: string | readonly string[]
+  /** 路径匹配模式 */
+  pattern: RegExp
+  /** 匹配后返回的标准库标识（用于查找 STANDARD_LIBRARIES） */
+  stdlibName: string
+}
+
 // ============ 默认路径模式 ============
 /**
  * 默认路径模式（与 package.json 中的默认值同步）
@@ -106,6 +116,56 @@ const DEFAULT_PATH_PATTERNS: RawPathPattern[] = [
   },
 ]
 
+// ============ 标准库路径模式 ============
+/**
+ * 标准库路径检测模式
+ * 用于识别语言标准库，返回对应的标准库标识
+ *
+ * 检测优先级：标准库模式 > 第三方库模式
+ */
+const STANDARD_LIB_PATTERNS: StdlibPattern[] = [
+  // Python 标准库
+  // - <frozen> 模块（如 importlib._bootstrap）
+  // - lib/python3.x/ 路径（排除 site-packages）
+  // - Python.framework/Versions/X.Y/lib/pythonX.Y/（macOS 框架安装）
+  {
+    languageId: 'python',
+    pattern:
+      /<frozen[^>]*>|\/lib\/python\d+\.\d+\/(?!.*site-packages)|\/Python\.framework\/Versions\/\d+\.\d+\/lib\/python\d+\.\d+\//i,
+    stdlibName: 'python',
+  },
+  // Go 标准库
+  // - GOROOT/src/ 路径
+  // - go/src/ 路径（旧版布局）
+  {
+    languageId: 'go',
+    pattern: /\/go\/src\/|\/GOROOT\/src\/|\/sdk\/golang\/go\/src\//i,
+    stdlibName: 'go',
+  },
+  // Rust 标准库
+  // - rustlib/src/rust/library/ 路径
+  // - .rustup/toolchains/.../library/ 路径
+  {
+    languageId: 'rust',
+    pattern:
+      /rustlib\/src\/rust\/library\/|\.rustup\/toolchains\/[^/]+\/lib\/rustlib\/src\/rust\/library\//i,
+    stdlibName: 'rust',
+  },
+  // Node.js 标准库
+  // - node/lib/ 路径（源码安装）
+  // - 内置模块通过 node: 前缀识别（在代码层面处理）
+  {
+    languageId: [
+      'javascript',
+      'typescript',
+      'javascriptreact',
+      'typescriptreact',
+    ],
+    pattern: /\/node\/lib\/|\/nodejs\/src\//i,
+    stdlibName: 'node',
+  },
+]
+
 // ============ 缓存机制 ============
 
 /** 缓存已编译的路径模式 */
@@ -161,6 +221,37 @@ export function extractLibraryFromPath(
     const match = normalized.match(pattern)
     if (match) {
       return match[1]
+    }
+  }
+
+  return null
+}
+
+/**
+ * 检测是否为标准库路径
+ * @param filePath 文件路径
+ * @param languageId 可选的语言 ID，用于过滤匹配的模式
+ * @returns 标准库标识（如 'python', 'rust'）或 null
+ */
+export function detectStandardLibrary(
+  filePath: string,
+  languageId?: string,
+): string | null {
+  const normalized = filePath.replace(/\\/g, '/')
+
+  // 按语言过滤模式
+  const filteredPatterns = languageId
+    ? STANDARD_LIB_PATTERNS.filter((p) => {
+        const langs = Array.isArray(p.languageId)
+          ? p.languageId
+          : [p.languageId]
+        return langs.includes(languageId)
+      })
+    : STANDARD_LIB_PATTERNS
+
+  for (const { pattern, stdlibName } of filteredPatterns) {
+    if (pattern.test(normalized)) {
+      return stdlibName
     }
   }
 

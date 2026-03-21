@@ -1,18 +1,24 @@
 import * as vscode from 'vscode'
-import { extractLibraryFromPath } from '../constants/languagePaths'
+import {
+  extractLibraryFromPath,
+  detectStandardLibrary,
+} from '../constants/languagePaths'
+import { STANDARD_LIBRARIES } from '../constants/libraries'
 
 /**
  * 检测详情
  */
 interface DetectionDetails {
-  /** 检测方法：'lsp' | 'fallback' | 'none' */
-  method: 'lsp' | 'fallback' | 'none'
+  /** 检测方法：'lsp' | 'fallback' | 'stdlib' | 'none' */
+  method: 'lsp' | 'fallback' | 'stdlib' | 'none'
   /** 定义文件路径（如果是 LSP 检测） */
   definitionPath?: string
   /** 匹配到的模式（如果有） */
   matchedPattern?: string
   /** 错误信息（如果有） */
   error?: string
+  /** 是否为标准库 */
+  isStdlib?: boolean
 }
 
 /**
@@ -56,9 +62,10 @@ export class LibraryDetector {
         name: lspResult.libraryName,
         confidence: 'high',
         details: {
-          method: 'lsp',
+          method: lspResult.isStdlib ? 'stdlib' : 'lsp',
           definitionPath: lspResult.definitionPath,
           matchedPattern: lspResult.matchedPattern,
+          isStdlib: lspResult.isStdlib,
         },
       }
     }
@@ -96,6 +103,7 @@ export class LibraryDetector {
     libraryName: string
     definitionPath: string
     matchedPattern?: string
+    isStdlib?: boolean
   } | null> {
     try {
       const definitions = await vscode.commands.executeCommand<
@@ -113,6 +121,17 @@ export class LibraryDetector {
       const definitionPath = definitionUri.fsPath
 
       console.log(`[Context7] LSP: 找到定义在 ${definitionPath}`)
+
+      // 优先检测标准库
+      const stdlibName = detectStandardLibrary(definitionPath, languageId)
+      if (stdlibName) {
+        console.log(`[Context7] LSP: 检测到标准库 "${stdlibName}"`)
+        return {
+          libraryName: stdlibName,
+          definitionPath,
+          isStdlib: true,
+        }
+      }
 
       // 传递源文件的语言 ID，用于过滤匹配模式
       const libraryName = extractLibraryFromPath(definitionPath, languageId)
@@ -140,6 +159,18 @@ export class LibraryDetector {
     const match = text.match(/^[a-zA-Z_]\w*/)
     return match ? match[0] : null
   }
+}
+
+/**
+ * 根据标准库名称查找 Context7 ID
+ * @param stdlibName 标准库名称（如 'python', 'rust'）
+ * @returns 标准库的 Context7 ID，或 null
+ */
+export function getStdlibContext7Id(stdlibName: string): string | null {
+  const stdlib = STANDARD_LIBRARIES.find(
+    (lib) => lib.name.toLowerCase() === stdlibName.toLowerCase(),
+  )
+  return stdlib?.id ?? null
 }
 
 // 单例

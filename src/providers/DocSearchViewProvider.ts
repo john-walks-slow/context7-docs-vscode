@@ -172,7 +172,19 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
     const detector = new LibraryDetector()
     const libraryInfo = await detector.detectLibraryFromSelection()
 
-    // 情况1：LSP 高置信度检测成功
+    // 情况1：标准库检测
+    if (libraryInfo && libraryInfo.details.isStdlib) {
+      const { getStdlibContext7Id } = await import('../utils/libraryDetector')
+      const stdlibId = getStdlibContext7Id(libraryInfo.name)
+      if (stdlibId) {
+        // 确保标准库在用户库列表中
+        await this._libraryService.addLibrary(stdlibId, libraryInfo.name)
+        await this._handleSearch(stdlibId, selectedText)
+        return
+      }
+    }
+
+    // 情况2：LSP 高置信度检测成功
     if (libraryInfo && libraryInfo.confidence === 'high') {
       // 先在已知库中查找
       const library = this._libraryService.findLibraryByName(libraryInfo.name)
@@ -196,7 +208,7 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
       }
     }
 
-    // 情况2：低置信度或检测失败 → 弹出选择器
+    // 情况3：低置信度或检测失败 → 弹出选择器
     const searchName = libraryInfo?.name || ''
     const result = await this._libraryPicker.selectLibraryForSearch(searchName)
 

@@ -103,3 +103,37 @@ export const COMMON_LIBRARIES: LibraryItem[] = [
     description: 'Cross-browser CSS animations',
   },
 ]
+
+/**
+ * 语言标准库映射
+ * 用于检测语言内置库并映射到 Context7 ID
+ *
+ * 当 LSP 追踪到标准库路径时，使用此映射获取正确的 Context7 ID
+ */
+export const STANDARD_LIBRARIES: LibraryItem[] = [
+  {
+    id: '/python/cpython',
+    name: 'python',
+    description: 'Python standard library (stdlib)',
+  },
+  {
+    id: '/rust-lang/rust',
+    name: 'rust',
+    description: 'Rust standard library (std)',
+  },
+  {
+    id: '/golang/go',
+    name: 'go',
+    description: 'Go standard library',
+  },
+  {
+    id: '/microsoft/typescript',
+    name: 'typescript',
+    description: 'TypeScript standard library',
+  },
+  {
+    id: '/nodejs/node',
+    name: 'node',
+    description: 'Node.js standard library',
+  },
+]

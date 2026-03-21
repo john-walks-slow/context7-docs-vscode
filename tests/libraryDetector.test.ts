@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { LibraryDetector } from '../src/utils/libraryDetector'
+import { LibraryDetector, getStdlibContext7Id } from '../src/utils/libraryDetector'
 import * as vscode from 'vscode'
 
 // ==================== 类型定义 ====================
@@ -289,5 +289,118 @@ describe('LibraryDetector', () => {
         result === null || (result && typeof result.libraryName === 'string'),
       ).toBe(true)
     })
+  })
+
+  describe('Standard library detection', () => {
+    it('should detect Python stdlib and return stdlib flag', async () => {
+      const mockEditor: MockTextEditor = {
+        document: {
+          getText: vi.fn(() => 'os.path.join'),
+          languageId: 'python',
+          uri: { fsPath: '/test/file.py' },
+        },
+        selection: {
+          start: { line: 0, character: 0 },
+          end: { line: 0, character: 10 },
+        },
+      }
+      setMockActiveEditor(mockEditor)
+      // LSP 返回 Python 标准库路径
+      mockExecuteCommand([
+        {
+          uri: { fsPath: '/usr/lib/python3.11/os.py' },
+          range: { start: { line: 0, character: 0 } },
+        },
+      ])
+
+      const result = await detector.detectLibraryFromSelection()
+
+      expect(result).not.toBeNull()
+      expect(result?.name).toBe('python')
+      expect(result?.confidence).toBe('high')
+      expect(result?.details.isStdlib).toBe(true)
+      expect(result?.details.method).toBe('stdlib')
+    })
+
+    it('should detect Go stdlib', async () => {
+      const mockEditor: MockTextEditor = {
+        document: {
+          getText: vi.fn(() => 'fmt.Println'),
+          languageId: 'go',
+          uri: { fsPath: '/test/file.go' },
+        },
+        selection: {
+          start: { line: 0, character: 0 },
+          end: { line: 0, character: 10 },
+        },
+      }
+      setMockActiveEditor(mockEditor)
+      mockExecuteCommand([
+        {
+          uri: { fsPath: '/usr/local/go/src/fmt/print.go' },
+          range: { start: { line: 0, character: 0 } },
+        },
+      ])
+
+      const result = await detector.detectLibraryFromSelection()
+
+      expect(result).not.toBeNull()
+      expect(result?.name).toBe('go')
+      expect(result?.details.isStdlib).toBe(true)
+    })
+
+    it('should detect Rust stdlib', async () => {
+      const mockEditor: MockTextEditor = {
+        document: {
+          getText: vi.fn(() => 'String::new'),
+          languageId: 'rust',
+          uri: { fsPath: '/test/file.rs' },
+        },
+        selection: {
+          start: { line: 0, character: 0 },
+          end: { line: 0, character: 10 },
+        },
+      }
+      setMockActiveEditor(mockEditor)
+      mockExecuteCommand([
+        {
+          uri: { fsPath: '/rustlib/src/rust/library/alloc/src/string.rs' },
+          range: { start: { line: 0, character: 0 } },
+        },
+      ])
+
+      const result = await detector.detectLibraryFromSelection()
+
+      expect(result).not.toBeNull()
+      expect(result?.name).toBe('rust')
+      expect(result?.details.isStdlib).toBe(true)
+    })
+  })
+})
+
+describe('getStdlibContext7Id', () => {
+  it('should return correct Context7 ID for Python', () => {
+    expect(getStdlibContext7Id('python')).toBe('/python/cpython')
+    expect(getStdlibContext7Id('Python')).toBe('/python/cpython')
+  })
+
+  it('should return correct Context7 ID for Rust', () => {
+    expect(getStdlibContext7Id('rust')).toBe('/rust-lang/rust')
+  })
+
+  it('should return correct Context7 ID for Go', () => {
+    expect(getStdlibContext7Id('go')).toBe('/golang/go')
+  })
+
+  it('should return correct Context7 ID for TypeScript', () => {
+    expect(getStdlibContext7Id('typescript')).toBe('/microsoft/typescript')
+  })
+
+  it('should return correct Context7 ID for Node.js', () => {
+    expect(getStdlibContext7Id('node')).toBe('/nodejs/node')
+  })
+
+  it('should return null for unknown stdlib', () => {
+    expect(getStdlibContext7Id('unknown')).toBeNull()
   })
 })

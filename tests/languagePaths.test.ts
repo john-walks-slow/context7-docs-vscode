@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { extractLibraryFromPath } from '../src/constants/languagePaths'
+import {
+  extractLibraryFromPath,
+  detectStandardLibrary,
+} from '../src/constants/languagePaths'
 
 // Mock VS Code API
 vi.mock('vscode', () => ({
@@ -298,6 +301,156 @@ describe('languagePaths', () => {
 
     it('should handle empty string', () => {
       expect(extractLibraryFromPath('', 'typescript')).toBeNull()
+    })
+  })
+})
+
+describe('detectStandardLibrary', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  describe('Python stdlib', () => {
+    it('should detect frozen modules', () => {
+      expect(
+        detectStandardLibrary('<frozen importlib._bootstrap>', 'python'),
+      ).toBe('python')
+      expect(detectStandardLibrary('<frozen os>', 'python')).toBe('python')
+      expect(
+        detectStandardLibrary('<frozen _frozen_importlib>', 'python'),
+      ).toBe('python')
+    })
+
+    it('should detect lib/python3.x path', () => {
+      expect(detectStandardLibrary('/usr/lib/python3.11/os.py', 'python')).toBe(
+        'python',
+      )
+      expect(
+        detectStandardLibrary(
+          '/usr/local/lib/python3.12/json/__init__.py',
+          'python',
+        ),
+      ).toBe('python')
+    })
+
+    it('should detect macOS framework path', () => {
+      // Python.org 安装器路径
+      expect(
+        detectStandardLibrary(
+          '/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/os.py',
+          'python',
+        ),
+      ).toBe('python')
+      // 系统自带 Python 路径
+      expect(
+        detectStandardLibrary(
+          '/System/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/os.py',
+          'python',
+        ),
+      ).toBe('python')
+    })
+
+    it('should not detect third-party packages', () => {
+      // site-packages 是第三方包路径
+      expect(
+        detectStandardLibrary(
+          '/home/user/.local/lib/python3.11/site-packages/requests/__init__.py',
+          'python',
+        ),
+      ).toBeNull()
+      // dist-packages 也是第三方包路径（Debian/Ubuntu）
+      expect(
+        detectStandardLibrary(
+          '/usr/lib/python3/dist-packages/requests/__init__.py',
+          'python',
+        ),
+      ).toBeNull()
+    })
+  })
+
+  describe('Go stdlib', () => {
+    it('should detect GOROOT/src path', () => {
+      expect(
+        detectStandardLibrary('/usr/local/go/src/fmt/print.go', 'go'),
+      ).toBe('go')
+      expect(
+        detectStandardLibrary('/usr/local/go/src/net/http/client.go', 'go'),
+      ).toBe('go')
+    })
+
+    it('should not detect third-party packages', () => {
+      expect(
+        detectStandardLibrary(
+          '/home/user/go/pkg/mod/github.com/gin-gonic/gin@v1.9.0/context.go',
+          'go',
+        ),
+      ).toBeNull()
+    })
+  })
+
+  describe('Rust stdlib', () => {
+    it('should detect rustlib/src/rust/library path', () => {
+      expect(
+        detectStandardLibrary(
+          '/home/user/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/io/mod.rs',
+          'rust',
+        ),
+      ).toBe('rust')
+      expect(
+        detectStandardLibrary(
+          '/rustlib/src/rust/library/alloc/src/string.rs',
+          'rust',
+        ),
+      ).toBe('rust')
+    })
+
+    it('should not detect third-party crates', () => {
+      expect(
+        detectStandardLibrary(
+          '/home/user/.cargo/registry/src/github.com-1ecc6299db9ec823/serde-1.0.188/src/lib.rs',
+          'rust',
+        ),
+      ).toBeNull()
+    })
+  })
+
+  describe('Node.js stdlib', () => {
+    it('should detect node/lib path', () => {
+      expect(
+        detectStandardLibrary('/usr/local/node/lib/fs.js', 'javascript'),
+      ).toBe('node')
+      expect(
+        detectStandardLibrary('/nodejs/src/lib/path.js', 'typescript'),
+      ).toBe('node')
+    })
+  })
+
+  describe('Language filtering', () => {
+    it('should only match patterns for specified language', () => {
+      // Python stdlib path with go language should not match
+      expect(
+        detectStandardLibrary('/usr/lib/python3.11/os.py', 'go'),
+      ).toBeNull()
+    })
+
+    it('should match all patterns when no language specified', () => {
+      expect(detectStandardLibrary('/usr/lib/python3.11/os.py')).toBe('python')
+      expect(detectStandardLibrary('/usr/local/go/src/fmt/print.go')).toBe('go')
+    })
+  })
+
+  describe('Edge cases', () => {
+    it('should return null for non-stdlib paths', () => {
+      expect(
+        detectStandardLibrary(
+          '/home/user/my-project/src/index.ts',
+          'typescript',
+        ),
+      ).toBeNull()
+    })
+
+    it('should handle empty string', () => {
+      expect(detectStandardLibrary('', 'python')).toBeNull()
     })
   })
 })
