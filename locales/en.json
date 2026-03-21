@@ -13,6 +13,8 @@
   "command.addBookmark": "Add Bookmark",
   "command.removeBookmark": "Remove Bookmark",
   "command.editBookmark": "Edit Bookmark",
+  "command.editLibrary": "Edit Library",
+  "command.removeLibrary": "Remove Library",
   "command.setApiKey": "Set API Key",
 
   "message.apiKeySaved": "Context7 API Key saved securely",

@@ -13,6 +13,8 @@
   "command.addBookmark": "添加书签",
   "command.removeBookmark": "移除书签",
   "command.editBookmark": "编辑书签",
+  "command.editLibrary": "编辑库",
+  "command.removeLibrary": "移除库",
   "command.setApiKey": "设置 API Key",
 
   "message.apiKeySaved": "Context7 API Key 已安全保存",

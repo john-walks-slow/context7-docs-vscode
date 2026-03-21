@@ -326,7 +326,7 @@ describe('LibraryPicker', () => {
       )
       expect(axiosItem?.isUser).toBe(true)
 
-      await qp._clickButton(axiosItem, { tooltip: 'command.removeBookmark' })
+      await qp._clickButton(axiosItem, { tooltip: 'command.removeLibrary' })
       await promise
 
       expect(mockLibraryService.removeLibrary).toHaveBeenCalledWith(
@@ -341,7 +341,7 @@ describe('LibraryPicker', () => {
       const axiosItem = qp.items.find(
         (i: any) => i.libraryId === '/axios/axios',
       )
-      await qp._clickButton(axiosItem, { tooltip: 'command.editBookmark' })
+      await qp._clickButton(axiosItem, { tooltip: 'command.editLibrary' })
       await promise
 
       expect(vscode.commands.executeCommand).toHaveBeenCalledWith(

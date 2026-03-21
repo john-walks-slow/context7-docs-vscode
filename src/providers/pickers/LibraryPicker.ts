@@ -52,11 +52,11 @@ export class LibraryPicker {
               },
               {
                 iconPath: new vscode.ThemeIcon('edit'),
-                tooltip: this._i18n.t('command.editBookmark'),
+                tooltip: this._i18n.t('command.editLibrary'),
               },
               {
                 iconPath: new vscode.ThemeIcon('trash'),
-                tooltip: this._i18n.t('command.removeBookmark'),
+                tooltip: this._i18n.t('command.removeLibrary'),
               },
             ]
           : [
@@ -212,7 +212,7 @@ export class LibraryPicker {
         return
       }
 
-      if (event.button.tooltip === this._i18n.t('command.removeBookmark')) {
+      if (event.button.tooltip === this._i18n.t('command.removeLibrary')) {
         await this._libraryService.removeLibrary(item.libraryId)
         // 刷新列表
         const idx = quickPick.items.findIndex(
@@ -222,7 +222,7 @@ export class LibraryPicker {
           quickPick.items = quickPick.items.filter((_, i) => i !== idx)
         }
       } else if (
-        event.button.tooltip === this._i18n.t('command.editBookmark')
+        event.button.tooltip === this._i18n.t('command.editLibrary')
       ) {
         // 打开 settings.json 并定位到 context7.libraries
         await vscode.commands.executeCommand(
