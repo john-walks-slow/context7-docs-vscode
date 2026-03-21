@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import { Context7Client } from '../api/context7'
-import { PRESET_LIBRARIES } from '../constants/libraries'
+import { PRESET_LIBRARIES, STANDARD_LIBRARIES } from '../constants/libraries'
 import { I18nService } from './I18nService'
 import type { Library, LibraryInfo } from '../types'
 
@@ -45,7 +45,7 @@ export class LibraryService {
 
   /**
    * Build keyword → library ID index
-   * Combines PRESET_LIBRARIES and user libraries
+   * Combines PRESET_LIBRARIES, STANDARD_LIBRARIES and user libraries
    */
   private _getKeywordIndex(): Map<string, string> {
     if (this._keywordIndex) {
@@ -61,6 +61,11 @@ export class LibraryService {
           index.set(kw.toLowerCase(), lib.id)
         }
       }
+    }
+
+    // Index from STANDARD_LIBRARIES (name as keyword)
+    for (const lib of STANDARD_LIBRARIES) {
+      index.set(lib.name.toLowerCase(), lib.id)
     }
 
     // Index from user libraries
@@ -163,7 +168,7 @@ export class LibraryService {
   }
 
   /**
-   * Find library by ID (searches presets + user libraries)
+   * Find library by ID (searches presets + standard + user libraries)
    */
   public findLibraryById(id: string): LibraryInfo | undefined {
     // Check user libraries first
@@ -177,6 +182,12 @@ export class LibraryService {
     const presetMatch = PRESET_LIBRARIES.find((lib) => lib.id === id)
     if (presetMatch) {
       return { id: presetMatch.id, name: presetMatch.name }
+    }
+
+    // Check standard libraries
+    const stdlibMatch = STANDARD_LIBRARIES.find((lib) => lib.id === id)
+    if (stdlibMatch) {
+      return { id: stdlibMatch.id, name: stdlibMatch.name }
     }
 
     return undefined
@@ -385,13 +396,10 @@ export class LibraryService {
 
   /**
    * Save libraries to settings
+   * Note: 不指定 target 让 VS Code 自动选择当前作用域（支持 Profile）
    */
   private async _saveLibraries(libraries: Library[]): Promise<void> {
     const config = vscode.workspace.getConfiguration('context7')
-    await config.update(
-      'libraries',
-      libraries,
-      vscode.ConfigurationTarget.Global,
-    )
+    await config.update('libraries', libraries)
   }
 }

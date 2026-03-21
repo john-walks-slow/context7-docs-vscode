@@ -182,7 +182,7 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
     const detectedInfo = await detector.detectLibraryFromSelection()
     const keyword = detectedInfo?.name || ''
 
-    // Step 1: Try to resolve by keyword
+    // Try to resolve by keyword
     if (keyword) {
       const library = this._libraryService.resolveByKeyword(keyword)
       if (library) {
