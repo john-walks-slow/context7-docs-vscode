@@ -30,7 +30,10 @@ export class LibraryPicker {
     action: 'search' | 'manage',
     onSearch?: (libraryId: string, libraryName: string) => Promise<void>,
   ): Promise<void> {
-    const libraries = this._libraryService.getSortedLibraries()
+    const allLibraries = this._libraryService.getSortedLibraries()
+    // manage 模式只显示用户库（非预设库）
+    const libraries =
+      action === 'manage' ? allLibraries.filter((lib) => !lib.isPreset) : allLibraries
     const libraryItems: UserLibraryQuickPickItem[] = libraries.map((lib) => {
       const isUser = !lib.isPreset
       return {
@@ -98,7 +101,13 @@ export class LibraryPicker {
               description: lib.id,
               libraryId: lib.id,
               libraryName: lib.name,
-              isUser: false, // 最近使用的项不显示删除/编辑按钮
+              isUser: false,
+              buttons: [
+                {
+                  iconPath: new vscode.ThemeIcon('globe'),
+                  tooltip: this._i18n.t('command.openInBrowser'),
+                },
+              ],
             })
           }
         }

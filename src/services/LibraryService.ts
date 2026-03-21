@@ -19,7 +19,7 @@ export class LibraryService {
   private _keywordIndex: Map<string, string> | null = null
 
   /** Maximum number of recent libraries to keep */
-  private static readonly MAX_RECENT_LIBRARIES = 10
+  private static readonly MAX_RECENT_LIBRARIES = 5
 
   constructor(context: vscode.ExtensionContext, client: Context7Client) {
     this._context = context

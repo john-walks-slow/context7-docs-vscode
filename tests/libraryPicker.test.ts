@@ -242,14 +242,45 @@ describe('LibraryPicker', () => {
   })
 
   describe('selectLibrary - manage 模式', () => {
+    it('manage 模式只显示用户库（非预设库）', async () => {
+      // 设置包含预设库的数据
+      vi.mocked(mockLibraryService.getSortedLibraries).mockReturnValue([
+        { id: '/facebook/react', name: 'react', isPreset: true },
+        { id: '/vuejs/vue', name: 'vue', isPreset: true },
+        { id: '/axios/axios', name: 'axios' },
+      ])
+
+      const promise = libraryPicker.selectLibrary('manage')
+      const qp = currentQuickPick
+
+      // 预设库不应该出现
+      const reactItem = qp.items.find(
+        (i: any) => i.libraryId === '/facebook/react',
+      )
+      const vueItem = qp.items.find(
+        (i: any) => i.libraryId === '/vuejs/vue',
+      )
+      // 用户库应该出现
+      const axiosItem = qp.items.find(
+        (i: any) => i.libraryId === '/axios/axios',
+      )
+
+      expect(reactItem).toBeUndefined()
+      expect(vueItem).toBeUndefined()
+      expect(axiosItem).toBeTruthy()
+
+      await qp._hide()
+      await promise
+    })
+
     it('选择已有库时打开外部链接', async () => {
       const promise = libraryPicker.selectLibrary('manage')
       const qp = currentQuickPick
 
-      const reactItem = qp.items.find(
-        (i: any) => i.libraryId === '/facebook/react',
+      const axiosItem = qp.items.find(
+        (i: any) => i.libraryId === '/axios/axios',
       )
-      await qp._selectItem(reactItem)
+      await qp._selectItem(axiosItem)
       await promise
 
       expect(vscode.env.openExternal).toHaveBeenCalled()
