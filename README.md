@@ -14,12 +14,23 @@ Search library documentations, code snippets, and examples directly in VS Code, 
 ## Features
 
 - **Zero Setup** - Works without API key via MCP endpoint
-- **Smart Library Detection** - Automatically detects libraries from selected code using LSP (Support 10+ languages)
+- **Smart Library Detection** - Auto-detects libraries from code using LSP (see below)
 - **Search History** - Automatically records query history
 - **Syntax Highlighting** - Render code blocks and markdown; auto-wrap
-- **Secure API Key Storage** - Uses VS Code SecretStorage
 - **Result Caching** - Cache for faster repeated searches
-- **Quick Library Management** - Add, edit, and remove custom libraries
+
+### Smart Library Detection
+
+When you select code and run "Search Selection", the extension automatically detects the relevant library:
+
+1. **LSP Definition Tracking** - Traces symbol to its definition file via language server
+2. **Standard Library Detection** - Recognizes stdlib paths (Python, Rust, Go, Node.js)
+3. **Third-party Library Extraction** - Extracts library name from dependency paths
+4. **Fallback** - Uses language ID or selected identifier when LSP unavailable
+
+**Supported Languages:** JavaScript, TypeScript, JSX, TSX, Python, Go, Rust, Java, C#, Ruby, PHP, Dart, Vue
+
+**Verified Libraries:** React, Vue, Angular, Svelte, Next.js, Nuxt, Astro, Node.js stdlib, Python stdlib, Rust std, Go stdlib, Express, NestJS, Django, FastAPI, and more.
 
 ## Getting Started
 
@@ -48,11 +59,17 @@ Search library documentations, code snippets, and examples directly in VS Code, 
 
 ### Libraries
 
+The `keywords` field maps local module name to Context7 library ID.
+
 ```json
 {
   "context7.libraries": [
-    { "id": "/websites/react_dev", "name": "react" },
-    { "id": "/vuejs/vue", "name": "vue" }
+    {
+      "id": "/websites/react_dev",
+      "name": "React",
+      "keywords": ["react", "React", "react-dom"]
+    },
+    { "id": "/vuejs/docs", "name": "Vue", "keywords": ["vue", "Vue", "vuejs"] }
   ]
 }
 ```
@@ -72,52 +89,7 @@ Add custom patterns to extract library names from file paths:
 }
 ```
 
-Default:
-
-```json
-[
-  {
-    "languages": [
-      "javascript",
-      "typescript",
-      "javascriptreact",
-      "typescriptreact",
-      "vue"
-    ],
-    "pattern": ".*node_modules/@types/([^/]+)"
-  },
-  {
-    "languages": [
-      "javascript",
-      "typescript",
-      "javascriptreact",
-      "typescriptreact",
-      "vue"
-    ],
-    "pattern": ".*node_modules/(@[^/]+/[^/]+|[^/]+)"
-  },
-  { "languages": ["python"], "pattern": ".*site-packages/([^/]+)" },
-  { "languages": ["go"], "pattern": ".*pkg/mod/(.+)@" },
-  { "languages": ["rust"], "pattern": ".*registry/src/[^/]+/(.+)-\\d+\\.\\d+" },
-  { "languages": ["java"], "pattern": ".*\\.m2/repository/(.+/[^/]+)/\\d" },
-  {
-    "languages": ["java"],
-    "pattern": ".*\\.gradle/caches/modules-\\d+/files-\\d+\\.\\d+/([^/]+/[^/]+)"
-  },
-  {
-    "languages": ["csharp"],
-    "pattern": ".*[/\\\\](?:\\.nuget/packages|packages)[/\\\\]([^/\\\\]+)"
-  },
-  { "languages": ["ruby"], "pattern": ".*gems/(.+)-\\d+\\.\\d+" },
-  { "languages": ["php"], "pattern": ".*vendor/([^/]+/[^/]+)" },
-  {
-    "languages": ["dart"],
-    "pattern": ".*(?:\\.pub-cache|Pub/Cache)/hosted/[^/]+/(.+)-\\d+\\.\\d+"
-  }
-]
-```
-
-User patterns are matched **before** defaults, allowing you to override behavior for specific project structures.
+User patterns are matched **before** defaults, allowing you to override behavior for specific project structures. Defaults support common paths like `node_modules`, `site-packages`, Go modules, and more.
 
 ## Access Modes
 

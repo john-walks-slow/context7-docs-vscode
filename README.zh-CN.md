@@ -14,12 +14,23 @@
 ## 特性
 
 - **开箱即用** - 无需任何配置即可使用（通过 MCP 匿名访问）
-- **智能库检测** - 通过 LSP 自动识别代码所属库 (支持 10+ 语言)
+- **智能库检测** - 基于 LSP 自动识别代码所属库 (支持 10+ 语言)
 - **历史记录** - 自动记录查询历史
 - **语法高亮** - 渲染代码块和 markdown，可选自动换行
-- **安全存储** - 使用 VS Code SecretStorage 安全存储 API Key
 - **结果缓存** - 缓存加速重复搜索
-- **库管理** - 添加、编辑、删除自定义库
+
+### 智能库检测
+
+选中代码执行"搜索选中内容"时，扩展会自动检测相关库：
+
+1. **LSP 定义追踪** - 通过语言服务器追踪符号到定义文件
+2. **标准库识别** - 识别标准库路径（Python、Rust、Go、Node.js）
+3. **第三方库提取** - 从依赖路径提取库名（如 `node_modules/react` → `react`）
+4. **回退策略** - 无 LSP 时使用语言 ID 或选中标识符
+
+**支持语言：** JavaScript、TypeScript、JSX、TSX、Python、Go、Rust、Java、C#、Ruby、PHP、Dart、Vue
+
+**已验证库：** React、Vue、Angular、Svelte、Next.js、Nuxt、Astro、Node.js stdlib、Python stdlib、Rust std、Go stdlib、Express、NestJS、Django、FastAPI 等
 
 ## 快速开始
 
@@ -50,11 +61,17 @@
 
 ### 库列表
 
+`keywords` 字段用于本地库名 → Context7 库 ID 的映射：
+
 ```json
 {
   "context7.libraries": [
-    { "id": "/websites/react_dev", "name": "react" },
-    { "id": "/vuejs/vue", "name": "vue" }
+    {
+      "id": "/websites/react_dev",
+      "name": "React",
+      "keywords": ["react", "React", "react-dom"]
+    },
+    { "id": "/vuejs/docs", "name": "Vue", "keywords": ["vue", "Vue", "vuejs"] }
   ]
 }
 ```
@@ -74,52 +91,7 @@
 }
 ```
 
-默认值：
-
-```json
-[
-  {
-    "languages": [
-      "javascript",
-      "typescript",
-      "javascriptreact",
-      "typescriptreact",
-      "vue"
-    ],
-    "pattern": ".*node_modules/@types/([^/]+)"
-  },
-  {
-    "languages": [
-      "javascript",
-      "typescript",
-      "javascriptreact",
-      "typescriptreact",
-      "vue"
-    ],
-    "pattern": ".*node_modules/(@[^/]+/[^/]+|[^/]+)"
-  },
-  { "languages": ["python"], "pattern": ".*site-packages/([^/]+)" },
-  { "languages": ["go"], "pattern": ".*pkg/mod/(.+)@" },
-  { "languages": ["rust"], "pattern": ".*registry/src/[^/]+/(.+)-\\d+\\.\\d+" },
-  { "languages": ["java"], "pattern": ".*\\.m2/repository/(.+/[^/]+)/\\d" },
-  {
-    "languages": ["java"],
-    "pattern": ".*\\.gradle/caches/modules-\\d+/files-\\d+\\.\\d+/([^/]+/[^/]+)"
-  },
-  {
-    "languages": ["csharp"],
-    "pattern": ".*[/\\\\](?:\\.nuget/packages|packages)[/\\\\]([^/\\\\]+)"
-  },
-  { "languages": ["ruby"], "pattern": ".*gems/(.+)-\\d+\\.\\d+" },
-  { "languages": ["php"], "pattern": ".*vendor/([^/]+/[^/]+)" },
-  {
-    "languages": ["dart"],
-    "pattern": ".*(?:\\.pub-cache|Pub/Cache)/hosted/[^/]+/(.+)-\\d+\\.\\d+"
-  }
-]
-```
-
-用户模式会**优先于**默认模式匹配，可为特定项目结构自定义行为。
+用户模式会**优先于**默认模式匹配。默认支持 `node_modules`、`site-packages`、Go modules 等常见路径。
 
 ## 访问模式
 

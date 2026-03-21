@@ -241,7 +241,7 @@ describe('LibraryService - Library Management', () => {
 
   describe('resolveByKeyword', () => {
     it('should resolve when keyword matches preset library keywords', () => {
-      // COMMON_LIBRARIES has 'react' keyword for '/websites/react_dev'
+      // PRESET_LIBRARIES has 'react' keyword for '/websites/react_dev'
       const result = libraryService.resolveByKeyword('react')
       expect(result).toBeDefined()
       expect(result?.id).toBe('/websites/react_dev')
@@ -271,7 +271,7 @@ describe('LibraryService - Library Management', () => {
     })
 
     it('should be case-insensitive', () => {
-      // COMMON_LIBRARIES has 'react' keyword (lowercase)
+      // PRESET_LIBRARIES has 'react' keyword (lowercase)
       const result1 = libraryService.resolveByKeyword('REACT')
       const result2 = libraryService.resolveByKeyword('React')
       const result3 = libraryService.resolveByKeyword('react')
@@ -294,7 +294,9 @@ describe('LibraryService - Library Management', () => {
 
     it('should prioritize user library over preset when same keyword', async () => {
       // User library overrides preset with same keyword
-      await libraryService.addLibrary('/custom/react', 'Custom React', ['react'])
+      await libraryService.addLibrary('/custom/react', 'Custom React', [
+        'react',
+      ])
 
       const result = libraryService.resolveByKeyword('react')
       expect(result).toBeDefined()
@@ -315,7 +317,12 @@ describe('LibraryService - Library Management', () => {
     it('should use keywordToBind for binding when provided', async () => {
       // Setup: detected keyword "a", user searches with "b", selects React
       mockSearchLibraries.mockResolvedValue([
-        { id: '/websites/react_dev', title: 'React', totalSnippets: 100, benchmarkScore: 95 },
+        {
+          id: '/websites/react_dev',
+          title: 'React',
+          totalSnippets: 100,
+          benchmarkScore: 95,
+        },
       ])
 
       vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('b')
@@ -334,14 +341,24 @@ describe('LibraryService - Library Management', () => {
 
       // Verify addLibrary was called with "a" keyword
       const lastCall = configUpdate.mock.calls.at(-1)
-      const savedLibraries = lastCall?.[1] as Array<{ id: string; keywords?: string[] }>
-      const reactLib = savedLibraries?.find((l) => l.id === '/websites/react_dev')
+      const savedLibraries = lastCall?.[1] as Array<{
+        id: string
+        keywords?: string[]
+      }>
+      const reactLib = savedLibraries?.find(
+        (l) => l.id === '/websites/react_dev',
+      )
       expect(reactLib?.keywords).toContain('a')
     })
 
     it('should use searchKeyword for binding when keywordToBind not provided', async () => {
       mockSearchLibraries.mockResolvedValue([
-        { id: '/websites/react_dev', title: 'React', totalSnippets: 100, benchmarkScore: 95 },
+        {
+          id: '/websites/react_dev',
+          title: 'React',
+          totalSnippets: 100,
+          benchmarkScore: 95,
+        },
       ])
 
       vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('react')
@@ -352,7 +369,11 @@ describe('LibraryService - Library Management', () => {
       } as vscode.QuickPickItem & { libraryId: string; libraryTitle: string })
 
       // Call without keywordToBind
-      const result = await libraryService.searchAndSelectLibrary('react', undefined, true)
+      const result = await libraryService.searchAndSelectLibrary(
+        'react',
+        undefined,
+        true,
+      )
 
       expect(result).toBeDefined()
       expect(result?.keyword).toBe('react')
@@ -363,7 +384,12 @@ describe('LibraryService - Library Management', () => {
       mockSearchLibraries
         .mockResolvedValueOnce([]) // First search - no results
         .mockResolvedValueOnce([
-          { id: '/websites/react_dev', title: 'React', totalSnippets: 100, benchmarkScore: 95 },
+          {
+            id: '/websites/react_dev',
+            title: 'React',
+            totalSnippets: 100,
+            benchmarkScore: 95,
+          },
         ])
 
       // First: user clicks "Search with different keyword"
@@ -382,7 +408,11 @@ describe('LibraryService - Library Management', () => {
       // Second search input
       vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce('react')
 
-      const result = await libraryService.searchAndSelectLibrary('nonexistent', 'detected-keyword', true)
+      const result = await libraryService.searchAndSelectLibrary(
+        'nonexistent',
+        'detected-keyword',
+        true,
+      )
 
       // Should continue to use original keywordToBind
       expect(result?.keyword).toBe('detected-keyword')
@@ -396,20 +426,33 @@ describe('LibraryService - Library Management', () => {
         id: '__cancel__',
       } as vscode.QuickPickItem)
 
-      const result = await libraryService.searchAndSelectLibrary('nonexistent', 'keyword', true)
+      const result = await libraryService.searchAndSelectLibrary(
+        'nonexistent',
+        'keyword',
+        true,
+      )
 
       expect(result).toBeUndefined()
     })
 
     it('should exit cleanly on ESC in library selection', async () => {
       mockSearchLibraries.mockResolvedValue([
-        { id: '/websites/react_dev', title: 'React', totalSnippets: 100, benchmarkScore: 95 },
+        {
+          id: '/websites/react_dev',
+          title: 'React',
+          totalSnippets: 100,
+          benchmarkScore: 95,
+        },
       ])
 
       // User presses ESC (undefined = cancelled)
       vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce(undefined)
 
-      const result = await libraryService.searchAndSelectLibrary('react', 'keyword', true)
+      const result = await libraryService.searchAndSelectLibrary(
+        'react',
+        'keyword',
+        true,
+      )
 
       expect(result).toBeUndefined()
     })
@@ -425,7 +468,12 @@ describe('LibraryService - Library Management', () => {
 
     it('should handle back button in library selection', async () => {
       mockSearchLibraries.mockResolvedValue([
-        { id: '/websites/react_dev', title: 'React', totalSnippets: 100, benchmarkScore: 95 },
+        {
+          id: '/websites/react_dev',
+          title: 'React',
+          totalSnippets: 100,
+          benchmarkScore: 95,
+        },
       ])
 
       // User clicks back button, then cancels in next input
@@ -439,29 +487,45 @@ describe('LibraryService - Library Management', () => {
 
       vi.mocked(vscode.window.showInputBox).mockResolvedValueOnce(undefined)
 
-      const result = await libraryService.searchAndSelectLibrary('react', 'keyword', true)
+      const result = await libraryService.searchAndSelectLibrary(
+        'react',
+        'keyword',
+        true,
+      )
 
       expect(result).toBeUndefined()
     })
 
     it('should handle search error with retry', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {})
 
       mockSearchLibraries
         .mockRejectedValueOnce(new Error('Network error'))
         .mockResolvedValueOnce([
-          { id: '/websites/react_dev', title: 'React', totalSnippets: 100, benchmarkScore: 95 },
+          {
+            id: '/websites/react_dev',
+            title: 'React',
+            totalSnippets: 100,
+            benchmarkScore: 95,
+          },
         ])
 
-      vi.mocked(vscode.window.showErrorMessage)
-        .mockResolvedValueOnce('label.tryAgain' as vscode.MessageItem)
+      vi.mocked(vscode.window.showErrorMessage).mockResolvedValueOnce(
+        'label.tryAgain' as vscode.MessageItem,
+      )
       vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce({
         label: 'React',
         libraryId: '/websites/react_dev',
         libraryTitle: 'React',
       } as vscode.QuickPickItem & { libraryId: string; libraryTitle: string })
 
-      const result = await libraryService.searchAndSelectLibrary('react', 'keyword', true)
+      const result = await libraryService.searchAndSelectLibrary(
+        'react',
+        'keyword',
+        true,
+      )
 
       expect(result?.library.id).toBe('/websites/react_dev')
       expect(result?.keyword).toBe('keyword')
@@ -472,9 +536,15 @@ describe('LibraryService - Library Management', () => {
     it('should handle search error with cancel', async () => {
       mockSearchLibraries.mockRejectedValue(new Error('Network error'))
 
-      vi.mocked(vscode.window.showErrorMessage).mockResolvedValueOnce('label.cancelSearch' as vscode.MessageItem)
+      vi.mocked(vscode.window.showErrorMessage).mockResolvedValueOnce(
+        'label.cancelSearch' as vscode.MessageItem,
+      )
 
-      const result = await libraryService.searchAndSelectLibrary('react', 'keyword', true)
+      const result = await libraryService.searchAndSelectLibrary(
+        'react',
+        'keyword',
+        true,
+      )
 
       expect(result).toBeUndefined()
     })

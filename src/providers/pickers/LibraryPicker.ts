@@ -31,27 +31,37 @@ export class LibraryPicker {
     onSearch?: (libraryId: string, libraryName: string) => Promise<void>,
   ): Promise<void> {
     const libraries = this._libraryService.getSortedLibraries()
-    const libraryItems: UserLibraryQuickPickItem[] = libraries.map((lib) => ({
-      label: lib.name,
-      description: lib.id,
-      libraryId: lib.id,
-      libraryName: lib.name,
-      isUser: true,
-      buttons: [
-        {
-          iconPath: new vscode.ThemeIcon('globe'),
-          tooltip: this._i18n.t('command.openInBrowser'),
-        },
-        {
-          iconPath: new vscode.ThemeIcon('edit'),
-          tooltip: this._i18n.t('command.editBookmark'),
-        },
-        {
-          iconPath: new vscode.ThemeIcon('trash'),
-          tooltip: this._i18n.t('command.removeBookmark'),
-        },
-      ],
-    }))
+    const libraryItems: UserLibraryQuickPickItem[] = libraries.map((lib) => {
+      const isUser = !lib.isPreset
+      return {
+        label: lib.name,
+        description: lib.id,
+        libraryId: lib.id,
+        libraryName: lib.name,
+        isUser,
+        buttons: isUser
+          ? [
+              {
+                iconPath: new vscode.ThemeIcon('globe'),
+                tooltip: this._i18n.t('command.openInBrowser'),
+              },
+              {
+                iconPath: new vscode.ThemeIcon('edit'),
+                tooltip: this._i18n.t('command.editBookmark'),
+              },
+              {
+                iconPath: new vscode.ThemeIcon('trash'),
+                tooltip: this._i18n.t('command.removeBookmark'),
+              },
+            ]
+          : [
+              {
+                iconPath: new vscode.ThemeIcon('globe'),
+                tooltip: this._i18n.t('command.openInBrowser'),
+              },
+            ],
+      }
+    })
 
     const quickPick = vscode.window.createQuickPick<UserLibraryQuickPickItem>()
 
@@ -67,6 +77,32 @@ export class LibraryPicker {
               item.description?.toLowerCase().includes(filter.toLowerCase()),
           )
         : libraryItems
+
+      // 无搜索输入时，显示最近使用的库
+      if (!filter) {
+        const recentLibraries = this._libraryService.getRecentLibraries()
+        if (recentLibraries.length > 0) {
+          // 最近使用的分隔线
+          items.push({
+            label: this._i18n.t('label.recentLibraries'),
+            kind: vscode.QuickPickItemKind.Separator,
+            libraryId: '',
+            libraryName: '',
+            isUser: false,
+          })
+
+          // 最近使用的库（带 clock 图标）
+          for (const lib of recentLibraries) {
+            items.push({
+              label: `$(clock) ${lib.name}`,
+              description: lib.id,
+              libraryId: lib.id,
+              libraryName: lib.name,
+              isUser: false, // 最近使用的项不显示删除/编辑按钮
+            })
+          }
+        }
+      }
 
       items.push(...filtered)
 
@@ -129,20 +165,13 @@ export class LibraryPicker {
       }
 
       if (event.button.tooltip === this._i18n.t('command.removeBookmark')) {
-        const confirm = await vscode.window.showWarningMessage(
-          this._i18n.t('message.confirmRemove', { name: item.libraryName }),
-          this._i18n.t('button.remove'),
-          this._i18n.t('button.cancel'),
+        await this._libraryService.removeLibrary(item.libraryId)
+        // 刷新列表
+        const idx = quickPick.items.findIndex(
+          (i) => i.libraryId === item.libraryId,
         )
-        if (confirm === this._i18n.t('button.remove')) {
-          await this._libraryService.removeLibrary(item.libraryId)
-          // 刷新列表
-          const idx = quickPick.items.findIndex(
-            (i) => i.libraryId === item.libraryId,
-          )
-          if (idx !== -1) {
-            quickPick.items = quickPick.items.filter((_, i) => i !== idx)
-          }
+        if (idx !== -1) {
+          quickPick.items = quickPick.items.filter((_, i) => i !== idx)
         }
       } else if (
         event.button.tooltip === this._i18n.t('command.editBookmark')
@@ -173,6 +202,11 @@ export class LibraryPicker {
         selected.kind !== vscode.QuickPickItemKind.Separator
 
       if (hasMatchedLibrary) {
+        // 记录最近使用
+        await this._libraryService.addRecentLibrary(
+          selected.libraryId,
+          selected.libraryName,
+        )
         // 选择了已有的库
         if (action === 'search' && onSearch) {
           await onSearch(selected.libraryId, selected.libraryName)
@@ -189,6 +223,10 @@ export class LibraryPicker {
         const result =
           await this._libraryService.searchAndSelectLibrary(inputValue)
         if (result && action === 'search' && onSearch) {
+          await this._libraryService.addRecentLibrary(
+            result.library.id,
+            result.library.name,
+          )
           await onSearch(result.library.id, result.library.name)
         }
         return
@@ -198,6 +236,10 @@ export class LibraryPicker {
       if (selected?.libraryId === '__search__') {
         const result = await this._libraryService.searchAndSelectLibrary()
         if (result && action === 'search' && onSearch) {
+          await this._libraryService.addRecentLibrary(
+            result.library.id,
+            result.library.name,
+          )
           await onSearch(result.library.id, result.library.name)
         }
         return
@@ -207,6 +249,7 @@ export class LibraryPicker {
       if (selected?.libraryId === '__addById__') {
         const result = await this._libraryService.addLibraryById()
         if (result && action === 'search' && onSearch) {
+          await this._libraryService.addRecentLibrary(result.id, result.name)
           await onSearch(result.id, result.name)
         }
         return

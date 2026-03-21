@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import { Context7Client } from '../api/context7'
-import { COMMON_LIBRARIES } from '../constants/libraries'
+import { PRESET_LIBRARIES } from '../constants/libraries'
 import { I18nService } from './I18nService'
 import type { Library, LibraryInfo } from '../types'
 
@@ -9,14 +9,20 @@ import type { Library, LibraryInfo } from '../types'
  * Handles library CRUD operations and keyword resolution
  *
  * Data sources:
- * - COMMON_LIBRARIES: Preset libraries with keywords
+ * - PRESET_LIBRARIES: Preset libraries with keywords
  * - User libraries: Stored in VS Code settings (context7.libraries)
+ * - Recent libraries: Stored in globalState (context7.recentLibraries)
  */
 export class LibraryService {
+  private readonly _context: vscode.ExtensionContext
   private readonly _client: Context7Client
   private _keywordIndex: Map<string, string> | null = null
 
-  constructor(_context: vscode.ExtensionContext, client: Context7Client) {
+  /** Maximum number of recent libraries to keep */
+  private static readonly MAX_RECENT_LIBRARIES = 10
+
+  constructor(context: vscode.ExtensionContext, client: Context7Client) {
+    this._context = context
     this._client = client
   }
 
@@ -39,7 +45,7 @@ export class LibraryService {
 
   /**
    * Build keyword → library ID index
-   * Combines COMMON_LIBRARIES and user libraries
+   * Combines PRESET_LIBRARIES and user libraries
    */
   private _getKeywordIndex(): Map<string, string> {
     if (this._keywordIndex) {
@@ -48,8 +54,8 @@ export class LibraryService {
 
     const index = new Map<string, string>()
 
-    // Index from COMMON_LIBRARIES (they have their own keywords)
-    for (const lib of COMMON_LIBRARIES) {
+    // Index from PRESET_LIBRARIES (they have their own keywords)
+    for (const lib of PRESET_LIBRARIES) {
       if (lib.keywords) {
         for (const kw of lib.keywords) {
           index.set(kw.toLowerCase(), lib.id)
@@ -168,7 +174,7 @@ export class LibraryService {
     }
 
     // Check preset libraries
-    const presetMatch = COMMON_LIBRARIES.find((lib) => lib.id === id)
+    const presetMatch = PRESET_LIBRARIES.find((lib) => lib.id === id)
     if (presetMatch) {
       return { id: presetMatch.id, name: presetMatch.name }
     }
@@ -186,14 +192,49 @@ export class LibraryService {
     // Combine: user libraries + preset libraries (not in user list)
     const allLibraries = [
       ...userLibraries,
-      ...COMMON_LIBRARIES.filter((l) => !userIds.has(l.id)).map((l) => ({
+      ...PRESET_LIBRARIES.filter((l) => !userIds.has(l.id)).map((l) => ({
         id: l.id,
         name: l.name,
         keywords: l.keywords,
+        isPreset: true,
       })),
     ]
 
     return allLibraries.sort((a, b) => a.name.localeCompare(b.name))
+  }
+
+  /**
+   * Get recent libraries from globalState
+   * @returns Array of recent libraries (most recent first)
+   */
+  public getRecentLibraries(): Library[] {
+    return this._context.globalState.get<Library[]>('recentLibraries', [])
+  }
+
+  /**
+   * Add library to recent list
+   * Moves existing entry to front if already exists
+   */
+  public async addRecentLibrary(id: string, name: string): Promise<void> {
+    const recent = this.getRecentLibraries()
+
+    // Remove existing entry if present
+    const filtered = recent.filter((lib) => lib.id !== id)
+
+    // Add to front
+    filtered.unshift({ id, name })
+
+    // Limit to MAX_RECENT_LIBRARIES
+    const trimmed = filtered.slice(0, LibraryService.MAX_RECENT_LIBRARIES)
+
+    await this._context.globalState.update('recentLibraries', trimmed)
+  }
+
+  /**
+   * Clear recent libraries list
+   */
+  public async clearRecentLibraries(): Promise<void> {
+    await this._context.globalState.update('recentLibraries', [])
   }
 
   /**
@@ -246,7 +287,9 @@ export class LibraryService {
             [
               {
                 label: `$(arrow-left) ${I18nService.instance.t('label.searchDifferentKeyword')}`,
-                description: I18nService.instance.t('description.tryAnotherSearch'),
+                description: I18nService.instance.t(
+                  'description.tryAnotherSearch',
+                ),
                 id: '__retry__',
               },
               {
@@ -256,7 +299,9 @@ export class LibraryService {
               },
             ],
             {
-              placeHolder: I18nService.instance.t('label.noLibraryFound', { query: keyword }),
+              placeHolder: I18nService.instance.t('label.noLibraryFound', {
+                query: keyword,
+              }),
             },
           )
 
@@ -291,7 +336,9 @@ export class LibraryService {
         ]
 
         const selected = await vscode.window.showQuickPick(items, {
-          placeHolder: I18nService.instance.t('label.selectLibrary', { query: keyword }),
+          placeHolder: I18nService.instance.t('label.selectLibrary', {
+            query: keyword,
+          }),
         })
 
         // ESC pressed - exit and return undefined

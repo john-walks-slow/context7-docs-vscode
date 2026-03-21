@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  COMMON_LIBRARIES,
+  PRESET_LIBRARIES,
   STANDARD_LIBRARIES,
   type LibraryItem,
 } from '../src/constants/libraries'
@@ -16,11 +16,11 @@ import {
  * 3. 可选的 API 验证：设置环境变量 RUN_API_VALIDATION=1 时会实际调用 Context7 API
  */
 
-describe('COMMON_LIBRARIES', () => {
+describe('PRESET_LIBRARIES', () => {
   it('should have valid ID format for all libraries', () => {
     const invalidIds: string[] = []
 
-    for (const lib of COMMON_LIBRARIES) {
+    for (const lib of PRESET_LIBRARIES) {
       // Context7 ID 格式: /org/repo 或 /websites/xxx
       const isValid = /^\/[\w-]+\/[\w.-]+$/.test(lib.id)
       if (!isValid) {
@@ -32,7 +32,7 @@ describe('COMMON_LIBRARIES', () => {
   })
 
   it('should have non-empty names and descriptions', () => {
-    for (const lib of COMMON_LIBRARIES) {
+    for (const lib of PRESET_LIBRARIES) {
       expect(lib.name).toBeTruthy()
       expect(lib.name.length).toBeGreaterThan(0)
       expect(lib.description).toBeTruthy()
@@ -41,7 +41,7 @@ describe('COMMON_LIBRARIES', () => {
   })
 
   it('should have keywords for auto-resolution', () => {
-    const librariesWithoutKeywords = COMMON_LIBRARIES.filter(
+    const librariesWithoutKeywords = PRESET_LIBRARIES.filter(
       (lib) => !lib.keywords || lib.keywords.length === 0,
     )
 
@@ -50,7 +50,7 @@ describe('COMMON_LIBRARIES', () => {
   })
 
   it('should have unique IDs', () => {
-    const ids = COMMON_LIBRARIES.map((lib) => lib.id)
+    const ids = PRESET_LIBRARIES.map((lib) => lib.id)
     const uniqueIds = new Set(ids)
     expect(ids.length).toBe(uniqueIds.size)
   })
@@ -163,10 +163,10 @@ const VERIFIED_STANDARD_LIBRARY_IDS: Record<
 }
 
 describe('Library ID Verification', () => {
-  it('COMMON_LIBRARIES IDs should match verified IDs', () => {
+  it('PRESET_LIBRARIES IDs should match verified IDs', () => {
     const mismatches: string[] = []
 
-    for (const lib of COMMON_LIBRARIES) {
+    for (const lib of PRESET_LIBRARIES) {
       const verified = VERIFIED_LIBRARY_IDS[lib.id]
       if (!verified) {
         mismatches.push(`${lib.name}: ${lib.id} - NOT VERIFIED`)
@@ -236,7 +236,7 @@ describe.runIf(process.env.RUN_API_VALIDATION === '1')('API Validation', () => {
     return ids
   }
 
-  it.each(COMMON_LIBRARIES)(
+  it.each(PRESET_LIBRARIES)(
     'should verify $name ID exists in Context7',
     { timeout: 30000, concurrent: true },
     async (lib: LibraryItem) => {

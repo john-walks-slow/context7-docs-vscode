@@ -182,7 +182,7 @@ export class LibraryDetector {
  */
 export function getStdlibNameByLanguage(languageId: string): string | null {
   const stdlib = STANDARD_LIBRARIES.find(
-    (lib) => lib.keywords?.includes(languageId) || lib.name === languageId,
+    (lib) => lib.languages.includes(languageId) || lib.name === languageId,
   )
   return stdlib?.name ?? null
 }

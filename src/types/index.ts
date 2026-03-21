@@ -5,11 +5,13 @@ import * as vscode from 'vscode'
  * - id: Context7 library ID (e.g., "/websites/react_dev")
  * - name: Display name (e.g., "React")
  * - keywords: Associated keywords for auto-resolution (e.g., ["react", "React", "react-dom"])
+ * - isPreset: Whether this is a preset library (PRESET_LIBRARIES), cannot be deleted
  */
 export interface Library {
   id: string
   name: string
   keywords?: string[]
+  isPreset?: boolean
 }
 
 /**

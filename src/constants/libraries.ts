@@ -1,5 +1,5 @@
 /**
- * Recommended library list with keywords for auto-resolution
+ * Context7 库，通过关键词将库的路径映射到 id
  */
 export interface LibraryItem {
   id: string
@@ -8,7 +8,15 @@ export interface LibraryItem {
   keywords?: string[]
 }
 
-export const COMMON_LIBRARIES: LibraryItem[] = [
+/**
+ * 标准库
+ */
+export interface StandardLibraryItem extends LibraryItem {
+  /** VS Code 语言 ID 列表（用于 LSP 失败时的语言回退） */
+  languages: string[]
+}
+
+export const PRESET_LIBRARIES: LibraryItem[] = [
   // === JavaScript/TypeScript Core ===
   {
     id: '/websites/react_dev',
@@ -168,39 +176,37 @@ export const COMMON_LIBRARIES: LibraryItem[] = [
 
 /**
  * 语言标准库映射
- * 用于检测语言内置库并映射到 Context7 ID
- *
  * 当 LSP 追踪到标准库路径时，使用此映射获取正确的 Context7 ID
  */
-export const STANDARD_LIBRARIES: LibraryItem[] = [
+export const STANDARD_LIBRARIES: StandardLibraryItem[] = [
   {
     id: '/python/cpython',
     name: 'python',
     description: 'Python standard library (stdlib)',
-    keywords: ['python'],
+    languages: ['python'],
   },
   {
     id: '/rust-lang/rust',
     name: 'rust',
     description: 'Rust standard library (std)',
-    keywords: ['rust'],
+    languages: ['rust'],
   },
   {
     id: '/golang/go',
     name: 'go',
     description: 'Go standard library',
-    keywords: ['go', 'golang'],
+    languages: ['go', 'golang'],
   },
   {
     id: '/microsoft/typescript',
     name: 'typescript',
     description: 'TypeScript standard library',
-    keywords: ['typescript', 'typescriptreact'],
+    languages: ['typescript', 'typescriptreact'],
   },
   {
     id: '/nodejs/node',
     name: 'node',
     description: 'Node.js standard library',
-    keywords: ['node', 'javascript', 'javascriptreact'],
+    languages: ['node', 'javascript', 'javascriptreact'],
   },
 ]

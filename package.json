@@ -20,7 +20,18 @@
     "context7",
     "code snippets",
     "library docs",
-    "api docs"
+    "api docs",
+    "react",
+    "vue",
+    "angular",
+    "svelte",
+    "next.js",
+    "python",
+    "rust",
+    "golang",
+    "typescript",
+    "javascript",
+    "LSP"
   ],
   "engines": {
     "vscode": "^1.101.0"

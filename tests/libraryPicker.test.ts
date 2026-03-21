@@ -139,6 +139,8 @@ describe('LibraryPicker', () => {
     mockLibraryService = {
       getLibraries: vi.fn(() => mockLibraries),
       getSortedLibraries: vi.fn(() => mockLibraries),
+      getRecentLibraries: vi.fn(() => []),
+      addRecentLibrary: vi.fn(),
       searchAndSelectLibrary: vi.fn(),
       addLibraryById: vi.fn(),
       addLibrary: vi.fn(),
@@ -181,7 +183,10 @@ describe('LibraryPicker', () => {
 
     it('选择 "Search library..." 时调用 searchAndSelectLibrary 然后 onSearch', async () => {
       const onSearch = vi.fn()
-      const mockResult = { library: { id: '/lodash/lodash', name: 'lodash' }, keyword: 'lodash' }
+      const mockResult = {
+        library: { id: '/lodash/lodash', name: 'lodash' },
+        keyword: 'lodash',
+      }
       vi.mocked(mockLibraryService.searchAndSelectLibrary).mockResolvedValue(
         mockResult,
       )
@@ -281,10 +286,6 @@ describe('LibraryPicker', () => {
     })
 
     it('点击 "Remove" 按钮删除用户库', async () => {
-      vi.mocked(vscode.window.showWarningMessage).mockResolvedValue(
-        'button.remove' as any,
-      )
-
       const promise = libraryPicker.selectLibrary('search')
       const qp = currentQuickPick
 
@@ -321,21 +322,37 @@ describe('LibraryPicker', () => {
       )
     })
 
-    it('用户取消删除时不调用 removeLibrary', async () => {
-      vi.mocked(vscode.window.showWarningMessage).mockResolvedValue(
-        'button.cancel' as any,
-      )
+    it('预设库不显示删除和编辑按钮', async () => {
+      // 覆盖 getSortedLibraries 返回预设库
+      vi.mocked(mockLibraryService.getSortedLibraries).mockReturnValue([
+        { id: '/facebook/react', name: 'react', isPreset: true },
+        { id: '/axios/axios', name: 'axios' },
+      ])
 
       const promise = libraryPicker.selectLibrary('search')
       const qp = currentQuickPick
 
+      const reactItem = qp.items.find(
+        (i: any) => i.libraryId === '/facebook/react',
+      )
       const axiosItem = qp.items.find(
         (i: any) => i.libraryId === '/axios/axios',
       )
-      await qp._clickButton(axiosItem, { tooltip: 'command.removeBookmark' })
-      await promise
 
-      expect(mockLibraryService.removeLibrary).not.toHaveBeenCalled()
+      // 预设库 isUser 为 false
+      expect(reactItem?.isUser).toBe(false)
+      // 用户库 isUser 为 true
+      expect(axiosItem?.isUser).toBe(true)
+
+      // 预设库只有打开链接按钮，没有删除和编辑按钮
+      expect(reactItem?.buttons).toHaveLength(1)
+      expect(reactItem?.buttons[0].tooltip).toBe('command.openInBrowser')
+
+      // 用户库有三个按钮
+      expect(axiosItem?.buttons).toHaveLength(3)
+
+      await qp._hide()
+      await promise
     })
   })
 
@@ -358,7 +375,10 @@ describe('LibraryPicker', () => {
 
     it('选择动态搜索项调用 searchAndSelectLibrary', async () => {
       const onSearch = vi.fn()
-      const mockResult = { library: { id: '/test/lib', name: 'lib' }, keyword: 'test-lib' }
+      const mockResult = {
+        library: { id: '/test/lib', name: 'lib' },
+        keyword: 'test-lib',
+      }
       vi.mocked(mockLibraryService.searchAndSelectLibrary).mockResolvedValue(
         mockResult,
       )
