@@ -70,7 +70,21 @@ export class LibraryDetector {
       }
     }
 
-    // 回退：提取第一个标识符
+    // 回退1：使用当前文件的语言 ID 作为库名
+    const languageId = editor.document.languageId
+    const stdlibName = getStdlibNameByLanguage(languageId)
+    if (stdlibName) {
+      return {
+        name: stdlibName,
+        confidence: 'low',
+        details: {
+          method: 'fallback',
+          isStdlib: true,
+        },
+      }
+    }
+
+    // 回退2：提取第一个标识符
     const identifier = this.extractFirstIdentifier(selectedText)
     if (identifier) {
       return {
@@ -159,6 +173,18 @@ export class LibraryDetector {
     const match = text.match(/^[a-zA-Z_]\w*/)
     return match ? match[0] : null
   }
+}
+
+/**
+ * 根据语言 ID 获取标准库名称
+ * @param languageId VS Code 语言 ID
+ * @returns 标准库名称，或 null（不支持的语言）
+ */
+export function getStdlibNameByLanguage(languageId: string): string | null {
+  const stdlib = STANDARD_LIBRARIES.find(
+    (lib) => lib.keywords?.includes(languageId) || lib.name === languageId,
+  )
+  return stdlib?.name ?? null
 }
 
 /**

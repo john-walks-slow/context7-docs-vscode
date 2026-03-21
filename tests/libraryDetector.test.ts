@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { LibraryDetector, getStdlibContext7Id } from '../src/utils/libraryDetector'
+import {
+  LibraryDetector,
+  getStdlibContext7Id,
+} from '../src/utils/libraryDetector'
 import * as vscode from 'vscode'
 
 // ==================== 类型定义 ====================
@@ -168,7 +171,7 @@ describe('LibraryDetector', () => {
       expect(result).toBeNull()
     })
 
-    it('should fall back to identifier extraction when LSP fails', async () => {
+    it('should fall back to language stdlib when LSP fails', async () => {
       const mockEditor: MockTextEditor = {
         document: {
           getText: vi.fn(() => 'useState'),
@@ -186,8 +189,32 @@ describe('LibraryDetector', () => {
       const result = await detector.detectLibraryFromSelection()
 
       expect(result).not.toBeNull()
-      expect(result?.name).toBe('useState')
+      expect(result?.name).toBe('typescript')
       expect(result?.confidence).toBe('low')
+      expect(result?.details.isStdlib).toBe(true)
+    })
+
+    it('should fall back to identifier for unsupported language', async () => {
+      const mockEditor: MockTextEditor = {
+        document: {
+          getText: vi.fn(() => 'someIdentifier'),
+          languageId: 'plaintext',
+          uri: { fsPath: '/test/file.txt' },
+        },
+        selection: {
+          start: { line: 0, character: 0 },
+          end: { line: 0, character: 20 },
+        },
+      }
+      setMockActiveEditor(mockEditor)
+      mockExecuteCommand([])
+
+      const result = await detector.detectLibraryFromSelection()
+
+      expect(result).not.toBeNull()
+      expect(result?.name).toBe('someIdentifier')
+      expect(result?.confidence).toBe('low')
+      expect(result?.details.isStdlib).toBeFalsy()
     })
 
     it('should return high confidence when LSP finds definition', async () => {
@@ -220,8 +247,8 @@ describe('LibraryDetector', () => {
       const mockEditor: MockTextEditor = {
         document: {
           getText: vi.fn(() => 'someIdentifier'),
-          languageId: 'typescript',
-          uri: { fsPath: '/test/file.ts' },
+          languageId: 'plaintext',
+          uri: { fsPath: '/test/file.txt' },
         },
         selection: {
           start: { line: 0, character: 0 },

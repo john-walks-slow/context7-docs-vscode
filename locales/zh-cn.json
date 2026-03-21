@@ -47,6 +47,10 @@
   "placeholder.searchHistory": "搜索历史（点击重新搜索）",
   "placeholder.bookmarks": "书签（点击查看）",
   "placeholder.enterApiKey": "输入 Context7 API Key",
+  "placeholder.libraryKeyword": "例如：react, vue, axios",
+
+  "prompt.enterLibraryKeyword": "输入库名关键词在 Context7 中搜索",
+  "prompt.enterLibraryId": "输入库 ID",
 
   "label.search": "搜索",
   "label.searchIn": "在 Context7 中搜索 \"{query}\"...",
@@ -57,6 +61,12 @@
   "label.searching": "正在搜索 \"{name}\"...",
   "label.selectLibrary": "为 \"{query}\" 选择一个库",
   "label.selectVersion": "选择版本（最新：{latest}）",
+  "label.noLibraryFound": "未找到 \"{query}\" 相关的库",
+  "label.searchDifferentKeyword": "换个关键词搜索",
+  "label.cancelSearch": "取消",
+  "label.tryAgain": "重试",
+  "description.tryAnotherSearch": "尝试其他搜索词",
+  "description.exitSearch": "退出搜索",
 
   "button.clearHistory": "清除历史",
   "button.clearBookmarks": "清除所有书签",

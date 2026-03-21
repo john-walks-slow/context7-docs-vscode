@@ -47,6 +47,10 @@
   "placeholder.searchHistory": "Search history (click to search again)",
   "placeholder.bookmarks": "Bookmarks (click to view)",
   "placeholder.enterApiKey": "Enter Context7 API Key",
+  "placeholder.libraryKeyword": "e.g., react, vue, axios",
+
+  "prompt.enterLibraryKeyword": "Enter library keyword to search in Context7",
+  "prompt.enterLibraryId": "Enter library ID",
 
   "label.search": "Search",
   "label.searchIn": "Search \"{query}\" in Context7...",
@@ -57,6 +61,12 @@
   "label.searching": "Searching \"{name}\"...",
   "label.selectLibrary": "Select a library for \"{query}\"",
   "label.selectVersion": "Select version (latest: {latest})",
+  "label.noLibraryFound": "No library found for \"{query}\"",
+  "label.searchDifferentKeyword": "Search with different keyword",
+  "label.cancelSearch": "Cancel",
+  "label.tryAgain": "Try Again",
+  "description.tryAnotherSearch": "Try another search term",
+  "description.exitSearch": "Exit search",
 
   "button.clearHistory": "Clear History",
   "button.clearBookmarks": "Clear All Bookmarks",

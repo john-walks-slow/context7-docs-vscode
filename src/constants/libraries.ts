@@ -9,7 +9,7 @@ export interface LibraryItem {
 }
 
 export const COMMON_LIBRARIES: LibraryItem[] = [
-  // === JavaScript/TypeScript ===
+  // === JavaScript/TypeScript Core ===
   {
     id: '/websites/react_dev',
     name: 'React',
@@ -17,17 +17,31 @@ export const COMMON_LIBRARIES: LibraryItem[] = [
     keywords: ['react', 'React', 'react-dom'],
   },
   {
-    id: '/vuejs/vue',
+    id: '/vuejs/docs',
     name: 'Vue',
     description: 'The Progressive JavaScript Framework',
     keywords: ['vue', 'Vue', 'vuejs'],
   },
   {
-    id: '/microsoft/TypeScript',
+    id: '/websites/svelte_dev',
+    name: 'Svelte',
+    description: 'Compiler for building reactive UIs',
+    keywords: ['svelte', 'Svelte', 'sveltekit'],
+  },
+  {
+    id: '/websites/angular_dev',
+    name: 'Angular',
+    description: 'Platform for building web applications',
+    keywords: ['angular', 'Angular', 'ng'],
+  },
+  {
+    id: '/microsoft/typescript',
     name: 'TypeScript',
     description: 'JavaScript with syntax for types',
     keywords: ['typescript', 'TypeScript', 'ts'],
   },
+
+  // === Meta Frameworks ===
   {
     id: '/vercel/next.js',
     name: 'Next.js',
@@ -35,29 +49,41 @@ export const COMMON_LIBRARIES: LibraryItem[] = [
     keywords: ['next', 'next.js', 'Next.js'],
   },
   {
-    id: '/tailwindlabs/tailwindcss',
-    name: 'Tailwind CSS',
-    description: 'A utility-first CSS framework',
-    keywords: ['tailwindcss', 'tailwind', 'Tailwind'],
+    id: '/websites/nuxt_4_x',
+    name: 'Nuxt',
+    description: 'The Vue Framework',
+    keywords: ['nuxt', 'nuxt.js', 'Nuxt'],
   },
+  {
+    id: '/websites/astro_build',
+    name: 'Astro',
+    description: 'Web framework for content-driven sites',
+    keywords: ['astro', 'Astro'],
+  },
+
+  // === Build Tools ===
   {
     id: '/vitejs/vite',
     name: 'Vite',
     description: 'Next generation frontend tooling',
     keywords: ['vite', 'Vite'],
   },
+
+  // === Styling ===
   {
-    id: '/prisma/prisma',
-    name: 'Prisma',
-    description: 'Next-generation ORM',
-    keywords: ['prisma', 'Prisma', '@prisma/client'],
+    id: '/websites/tailwindcss',
+    name: 'Tailwind CSS',
+    description: 'A utility-first CSS framework',
+    keywords: ['tailwindcss', 'tailwind', 'Tailwind'],
   },
   {
-    id: '/colinhacks/zod',
-    name: 'Zod',
-    description: 'TypeScript-first schema validation',
-    keywords: ['zod', 'Zod'],
+    id: '/websites/ui_shadcn',
+    name: 'shadcn/ui',
+    description: 'Beautifully designed UI components',
+    keywords: ['shadcn', 'shadcn/ui', 'shadcn-ui'],
   },
+
+  // === State Management ===
   {
     id: '/pmndrs/zustand',
     name: 'Zustand',
@@ -65,30 +91,66 @@ export const COMMON_LIBRARIES: LibraryItem[] = [
     keywords: ['zustand', 'Zustand'],
   },
   {
+    id: '/tanstack/query',
+    name: 'TanStack Query',
+    description: 'Powerful data synchronization library',
+    keywords: ['tanstack-query', 'react-query', '@tanstack/query'],
+  },
+
+  // === Backend/Full-stack ===
+  {
+    id: '/websites/expressjs_en',
+    name: 'Express',
+    description: 'Fast, unopinionated Node.js web framework',
+    keywords: ['express', 'Express', 'expressjs'],
+  },
+  {
+    id: '/websites/nestjs',
+    name: 'NestJS',
+    description: 'Progressive Node.js framework',
+    keywords: ['nestjs', 'NestJS', '@nestjs/core'],
+  },
+  {
+    id: '/prisma/docs',
+    name: 'Prisma',
+    description: 'Next-generation ORM',
+    keywords: ['prisma', 'Prisma', '@prisma/client'],
+  },
+
+  // === Testing ===
+  {
     id: '/microsoft/playwright',
     name: 'Playwright',
     description: 'End-to-end testing',
     keywords: ['playwright', 'Playwright', '@playwright/test'],
   },
 
+  // === Utilities ===
+  {
+    id: '/colinhacks/zod',
+    name: 'Zod',
+    description: 'TypeScript-first schema validation',
+    keywords: ['zod', 'Zod'],
+  },
+
   // === Python ===
   {
-    id: '/pallets/flask',
-    name: 'Flask',
-    description: 'Python micro web framework',
-    keywords: ['flask', 'Flask'],
+    id: '/django/django',
+    name: 'Django',
+    description: 'The web framework for perfectionists',
+    keywords: ['django', 'Django'],
   },
   {
-    id: '/fastapi/fastapi',
+    id: '/websites/fastapi_tiangolo',
     name: 'FastAPI',
     description: 'Modern, fast web framework for Python',
     keywords: ['fastapi', 'FastAPI'],
   },
   {
-    id: '/encode/httpx',
-    name: 'HTTPX',
-    description: 'Next generation HTTP client for Python',
-    keywords: ['httpx', 'HTTPX'],
+    id: '/pallets/flask',
+    name: 'Flask',
+    description: 'Python micro web framework',
+    keywords: ['flask', 'Flask'],
   },
   {
     id: '/pydantic/pydantic',
@@ -97,24 +159,10 @@ export const COMMON_LIBRARIES: LibraryItem[] = [
     keywords: ['pydantic', 'Pydantic'],
   },
   {
-    id: '/sqlalchemy/sqlalchemy',
+    id: '/websites/sqlalchemy_en_21',
     name: 'SQLAlchemy',
     description: 'Python SQL toolkit and ORM',
     keywords: ['sqlalchemy', 'SQLAlchemy'],
-  },
-
-  // === CSS ===
-  {
-    id: '/twbs/bootstrap',
-    name: 'Bootstrap',
-    description: 'Popular CSS framework',
-    keywords: ['bootstrap', 'Bootstrap'],
-  },
-  {
-    id: '/animate-css/animate.css',
-    name: 'Animate.css',
-    description: 'Cross-browser CSS animations',
-    keywords: ['animate.css', 'animate-css'],
   },
 ]
 
@@ -129,25 +177,30 @@ export const STANDARD_LIBRARIES: LibraryItem[] = [
     id: '/python/cpython',
     name: 'python',
     description: 'Python standard library (stdlib)',
+    keywords: ['python'],
   },
   {
     id: '/rust-lang/rust',
     name: 'rust',
     description: 'Rust standard library (std)',
+    keywords: ['rust'],
   },
   {
     id: '/golang/go',
     name: 'go',
     description: 'Go standard library',
+    keywords: ['go', 'golang'],
   },
   {
     id: '/microsoft/typescript',
     name: 'typescript',
     description: 'TypeScript standard library',
+    keywords: ['typescript', 'typescriptreact'],
   },
   {
     id: '/nodejs/node',
     name: 'node',
     description: 'Node.js standard library',
+    keywords: ['node', 'javascript', 'javascriptreact'],
   },
 ]

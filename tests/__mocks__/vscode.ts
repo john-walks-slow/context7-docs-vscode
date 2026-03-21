@@ -119,6 +119,7 @@ vi.mock('vscode', () => ({
       writeText: vi.fn(),
     },
     openExternal: vi.fn(),
+    language: 'en',
   },
   Uri: {
     parse: vi.fn((s: string) => ({ toString: () => s, fsPath: s })),
@@ -133,6 +134,11 @@ vi.mock('vscode', () => ({
   ColorThemeKind: {
     Light: 1,
     Dark: 2,
+  },
+  ConfigurationTarget: {
+    Global: 1,
+    Workspace: 2,
+    WorkspaceFolder: 3,
   },
   CancellationToken: {},
   SecretStorage: {},
