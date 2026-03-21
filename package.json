@@ -215,8 +215,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "pack:vsix": "vsce package --no-dependencies",
-    "publish:vsix": "vsce publish --no-dependencies -o build/<name>-<version>.vsix"
+    "pack:vsix": "vsce package --no-dependencies -o build/"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
