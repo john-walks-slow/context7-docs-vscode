@@ -184,23 +184,29 @@ export class LibraryService {
 
   /**
    * Get all libraries (presets + user libraries, sorted)
+   * User libraries come before preset libraries
    */
   public getSortedLibraries(): Library[] {
     const userLibraries = this.getLibraries()
     const userIds = new Set(userLibraries.map((l) => l.id))
 
-    // Combine: user libraries + preset libraries (not in user list)
-    const allLibraries = [
-      ...userLibraries,
-      ...PRESET_LIBRARIES.filter((l) => !userIds.has(l.id)).map((l) => ({
+    // User libraries (sorted by name)
+    const userLibs = userLibraries
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name))
+
+    // Preset libraries not in user list (sorted by name)
+    const presetLibs = PRESET_LIBRARIES.filter((l) => !userIds.has(l.id))
+      .map((l) => ({
         id: l.id,
         name: l.name,
         keywords: l.keywords,
         isPreset: true,
-      })),
-    ]
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name))
 
-    return allLibraries.sort((a, b) => a.name.localeCompare(b.name))
+    // User libraries first, then presets
+    return [...userLibs, ...presetLibs]
   }
 
   /**
