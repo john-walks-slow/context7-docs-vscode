@@ -163,3 +163,27 @@ export function createMockSecretStorage() {
     keys: vi.fn(() => Array.from(store.keys())),
   } as any
 }
+
+/**
+ * 创建 Mock Memento (用于 globalState)
+ */
+export function createMockMemento() {
+  const store = new Map<string, unknown>()
+  return {
+    get: vi.fn(<T>(key: string, defaultValue?: T): T => {
+      return store.has(key) ? (store.get(key) as T) : (defaultValue as T)
+    }),
+    update: vi.fn((key: string, value: unknown) => {
+      store.set(key, value)
+      return Promise.resolve()
+    }),
+    keys: vi.fn(() => Array.from(store.keys())),
+  } as const
+}
+
+/**
+ * 创建 Mock MessageItem
+ */
+export function createMockMessageItem(title: string): { title: string } {
+  return { title }
+}

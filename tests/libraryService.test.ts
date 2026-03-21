@@ -2,7 +2,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { Context7Client } from '../src/api/context7'
 import { LibraryService } from '../src/services/LibraryService'
 import * as vscode from 'vscode'
-import { createMockSecretStorage } from './__mocks__/vscode'
+import {
+  createMockSecretStorage,
+  createMockMemento,
+} from './__mocks__/vscode'
 
 // ==================== Mock I18nService ====================
 vi.mock('../src/services/I18nService', () => ({
@@ -21,10 +24,7 @@ vi.mock('../src/services/I18nService', () => ({
  */
 interface MockExtensionContext {
   extensionUri: { fsPath: string }
-  globalState: {
-    get: <T>(key: string, defaultValue?: T) => T
-    update: (key: string, value: unknown) => Promise<void>
-  }
+  globalState: ReturnType<typeof createMockMemento>
   secrets: vscode.SecretStorage
   subscriptions: unknown[]
 }
@@ -127,10 +127,7 @@ describe('LibraryService - Library Management', () => {
     // Mock extension context with secrets
     mockContext = {
       extensionUri: { fsPath: '/test/extension' },
-      globalState: {
-        get: vi.fn((_key: string, defaultValue: unknown) => defaultValue),
-        update: vi.fn(() => Promise.resolve()),
-      },
+      globalState: createMockMemento(),
       secrets: createMockSecretStorage(),
       subscriptions: [],
     }
@@ -512,8 +509,10 @@ describe('LibraryService - Library Management', () => {
           },
         ])
 
+      // VS Code showErrorMessage 有多个重载，当源码使用字符串按钮时返回字符串
+      // 但 vi.mocked() 类型推断选择了 MessageItem 重载，需要双重断言
       vi.mocked(vscode.window.showErrorMessage).mockResolvedValueOnce(
-        'label.tryAgain' as vscode.MessageItem,
+        'label.tryAgain' as unknown as vscode.MessageItem,
       )
       vi.mocked(vscode.window.showQuickPick).mockResolvedValueOnce({
         label: 'React',
@@ -537,7 +536,7 @@ describe('LibraryService - Library Management', () => {
       mockSearchLibraries.mockRejectedValue(new Error('Network error'))
 
       vi.mocked(vscode.window.showErrorMessage).mockResolvedValueOnce(
-        'label.cancelSearch' as vscode.MessageItem,
+        'label.cancelSearch' as unknown as vscode.MessageItem,
       )
 
       const result = await libraryService.searchAndSelectLibrary(
