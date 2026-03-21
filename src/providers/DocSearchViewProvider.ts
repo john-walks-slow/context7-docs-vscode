@@ -253,6 +253,11 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
       const library = this._libraryService.findLibraryById(libraryId)
       this._currentLibraryName = library?.name || libraryId
 
+      // 更新 Sidebar 标题为当前库名
+      if (this._view) {
+        this._view.title = this._currentLibraryName
+      }
+
       // 记录搜索历史
       await this._historyService.addHistory(
         libraryId,
