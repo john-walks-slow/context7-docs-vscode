@@ -4,6 +4,9 @@ import { PRESET_LIBRARIES } from '../constants/libraries'
 import { I18nService } from './I18nService'
 import type { Library, LibraryInfo } from '../types'
 
+// 重新导出类型供外部使用
+export type { LibraryInfo } from '../types'
+
 /**
  * Library management service
  * Handles library CRUD operations and keyword resolution
