@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.2.0] - 2026-03-21
 
 ### Added
 
@@ -11,19 +11,14 @@
 - Internationalization support (English/Chinese)
 - Development tasks: `watch:tsc` (TypeScript watch) and `watch-tests` (Vitest watch)
 - Launch configuration for temporary VS Code profile testing
+- JSON schema for `context7.libraries` and `context7.pathPatterns` settings
 
 ### Changed
 
-- Improved library search workflow
-- Optimized keyword binding flow
-- Dynamic sidebar title showing current library name
-- Library picker now distinguishes preset and user libraries; manage mode only shows user libraries (presets cannot be deleted)
+- Improved library search workflow with dynamic sidebar title
+- Library picker now distinguishes preset and user libraries; manage mode only shows user libraries
 - User libraries now appear before preset libraries in the list
-- Sidebar title updates immediately on search start, with rollback on failure
-- Reduced max recent libraries from 5 to 1 (most recent only)
-- Added JSON schema for `context7.libraries` and `context7.pathPatterns` settings
-- Library settings now respect VS Code Profile scope (no longer forced to Global)
-- Library settings storage reverted to Global scope for cross-profile consistency
+- Reduced max recent libraries to 1 (most recent only)
 
 ### Fixed
 

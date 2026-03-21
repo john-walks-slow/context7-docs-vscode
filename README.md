@@ -11,10 +11,19 @@ Search library documentations, code snippets, and examples directly in VS Code, 
 
 > AI has Context7 for instant docs. Now you do too！
 
+## What's New in 0.2.0
+
+- **Language Standard Library Detection** - Automatically detects and queries language standard libraries (Python stdlib, Rust std, Go stdlib, Node.js stdlib)
+- **Enhanced Keywords** - Bind multiple keywords to a single library ID for better matching
+- **Internationalization** - Full English and Chinese UI support
+- **Improved Library Picker** - Libraries grouped by Recent/User/Preset sections; user libraries appear first
+- **JSON Schema** - IntelliSense support for `context7.libraries` and `context7.pathPatterns` settings
+
 ## Features
 
 - **Zero Setup** - Works without API key via MCP endpoint
 - **Smart Library Detection** - Auto-detects libraries from code using LSP (see below)
+- **Internationalization** - Full English and Chinese UI support
 - **Search History** - Automatically records query history
 - **Syntax Highlighting** - Render code blocks and markdown; auto-wrap
 - **Result Caching** - Cache for faster repeated searches
@@ -26,7 +35,7 @@ When you select code and run "Search Selection", the extension automatically det
 1. **LSP Definition Tracking** - Traces symbol to its definition file via language server
 2. **Standard Library Detection** - Recognizes stdlib paths (Python, Rust, Go, Node.js)
 3. **Third-party Library Extraction** - Extracts library name from dependency paths
-4. **Fallback** - Uses language ID or selected identifier when LSP unavailable
+4. **Fallback** - Falls back to language standard library when LSP unavailable, or uses language ID/selected identifier
 
 **Supported Languages:** JavaScript, TypeScript, JSX, TSX, Python, Go, Rust, Java, C#, Ruby, PHP, Dart, Vue
 
@@ -91,6 +100,10 @@ Add custom patterns to extract library names from file paths:
 
 User patterns are matched **before** defaults, allowing you to override behavior for specific project structures. Defaults support common paths like `node_modules`, `site-packages`, Go modules, and more.
 
+### JSON Schema Support
+
+Both `context7.libraries` and `context7.pathPatterns` have JSON schema support for IntelliSense in `settings.json`.
+
 ## Access Modes
 
 |            | Anonymous (Default) | API Key                                                             |
@@ -111,6 +124,10 @@ pnpm watch
 pnpm build
 
 # Run tests
+
+# Development tasks
+pnpm watch:tsc    # TypeScript watch mode
+pnpm watch-tests  # Vitest watch mode
 pnpm test
 
 # Run tests with coverage
@@ -148,21 +165,33 @@ code --install-extension context7-docs-0.1.0.vsix
 
 ## Architecture
 
-```
-src/
-├── extension.ts           # Entry point
-├── api/context7.ts        # Context7 API client
-├── services/
-│   ├── LibraryService.ts  # Library management
-│   ├── SearchService.ts   # Search & highlighting
-│   └── SearchCache.ts     # Result caching
+├── SearchCache.ts # Result caching
+│ ├── HistoryService.ts # Search history
+│ ├── BookmarkService.ts # Bookmark management
+│ └── I18nService.ts # Internationalization
 ├── providers/
-│   └── DocSearchViewProvider.ts  # Webview provider
+│ ├── DocSearchViewProvider.ts # Webview provider
+│ ├── pickers/ # QuickPick pickers
+│ │ ├── LibraryPicker.ts
+│ │ └── HistoryPicker.ts
+│ └── webview/ # Webview communication
+│ ├── HtmlBuilder.ts
+│ └── MessageHandler.ts
+├── extension.ts # Entry point
+├── api/context7.ts # Context7 API client
+├── services/
+│ ├── LibraryService.ts # Library management
+│ ├── SearchService.ts # Search & highlighting
+│ └── SearchCache.ts # Result caching
+├── providers/
+│ └── DocSearchViewProvider.ts # Webview provider
 ├── utils/
-│   └── libraryDetector.ts # LSP-based library detection
-└── constants/             # Configuration
+│ └── libraryDetector.ts # LSP-based library detection
+└── constants/ # Configuration
+
 ```
 
 ## License
 
 MIT
+```

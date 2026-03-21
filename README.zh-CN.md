@@ -11,10 +11,19 @@
 
 > (眼馋 AI 的 Context7.. 终于人也能用了！)
 
+## 0.2.0 新功能
+
+- **语言标准库检测** - 自动检测并查询语言标准库（Python stdlib、Rust std、Go stdlib、Node.js stdlib）
+- **关键词增强** - 支持为单个库 ID 绑定多个关键词，提高匹配准确性
+- **多语言支持** - 完整的中英文界面支持
+- **库选择器优化** - 按 最近使用/用户库/预设库 分组显示；用户库优先显示
+- **JSON Schema** - `context7.libraries` 和 `context7.pathPatterns` 配置支持智能提示
+
 ## 特性
 
 - **开箱即用** - 无需任何配置即可使用（通过 MCP 匿名访问）
 - **智能库检测** - 基于 LSP 自动识别代码所属库 (支持 10+ 语言)
+- **多语言支持** - 完整的中英文界面
 - **历史记录** - 自动记录查询历史
 - **语法高亮** - 渲染代码块和 markdown，可选自动换行
 - **结果缓存** - 缓存加速重复搜索
@@ -26,7 +35,7 @@
 1. **LSP 定义追踪** - 通过语言服务器追踪符号到定义文件
 2. **标准库识别** - 识别标准库路径（Python、Rust、Go、Node.js）
 3. **第三方库提取** - 从依赖路径提取库名（如 `node_modules/react` → `react`）
-4. **回退策略** - 无 LSP 时使用语言 ID 或选中标识符
+4. **回退策略** - 无 LSP 时优先回退到语言标准库，其次使用语言 ID 或选中标识符
 
 **支持语言：** JavaScript、TypeScript、JSX、TSX、Python、Go、Rust、Java、C#、Ruby、PHP、Dart、Vue
 
@@ -93,6 +102,10 @@
 
 用户模式会**优先于**默认模式匹配。默认支持 `node_modules`、`site-packages`、Go modules 等常见路径。
 
+### JSON Schema 支持
+
+`context7.libraries` 和 `context7.pathPatterns` 配置均支持 JSON Schema，在 `settings.json` 中可获得智能提示。
+
 ## 访问模式
 
 |          | 匿名（默认） | API Key                                                              |
@@ -105,6 +118,10 @@
 ```bash
 pnpm install        # 安装依赖
 pnpm watch          # 开发模式
+
+# 开发任务
+pnpm watch:tsc      # TypeScript 监听模式
+pnpm watch-tests    # Vitest 监听模式
 pnpm build          # 构建
 pnpm test           # 运行测试
 pnpm test:coverage  # 测试覆盖率
@@ -115,21 +132,33 @@ pnpm lint           # 代码检查
 
 ## 架构
 
-```
-src/
-├── extension.ts           # 入口
-├── api/context7.ts        # Context7 API 客户端
-├── services/
-│   ├── LibraryService.ts  # 库管理
-│   ├── SearchService.ts   # 搜索与高亮
-│   └── SearchCache.ts     # 结果缓存
+├── SearchCache.ts # 结果缓存
+│ ├── HistoryService.ts # 搜索历史
+│ ├── BookmarkService.ts # 书签管理
+│ └── I18nService.ts # 国际化
 ├── providers/
-│   └── DocSearchViewProvider.ts  # Webview 提供者
+│ ├── DocSearchViewProvider.ts # Webview 提供者
+│ ├── pickers/ # QuickPick 选择器
+│ │ ├── LibraryPicker.ts
+│ │ └── HistoryPicker.ts
+│ └── webview/ # Webview 通信
+│ ├── HtmlBuilder.ts
+│ └── MessageHandler.ts
+├── extension.ts # 入口
+├── api/context7.ts # Context7 API 客户端
+├── services/
+│ ├── LibraryService.ts # 库管理
+│ ├── SearchService.ts # 搜索与高亮
+│ └── SearchCache.ts # 结果缓存
+├── providers/
+│ └── DocSearchViewProvider.ts # Webview 提供者
 ├── utils/
-│   └── libraryDetector.ts # LSP 库检测
-└── constants/             # 配置
+│ └── libraryDetector.ts # LSP 库检测
+└── constants/ # 配置
+
 ```
 
 ## License
 
 MIT
+```

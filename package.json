@@ -2,7 +2,7 @@
   "name": "context7-docs",
   "displayName": "Context7 Docs (For Human)",
   "description": "Search library docs, code snippets, and examples directly in VS Code",
-  "version": "0.1.1523",
+  "version": "0.2.0",
   "publisher": "JohnnRen",
   "license": "MIT",
   "icon": "resources/icon.png",
