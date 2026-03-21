@@ -1,106 +1,120 @@
 /**
- * 推荐库列表
- * 用于智能推荐服务，基于当前文件语言推荐相关库
- *
- * 注意：这是推荐列表，不是默认库。
- * 默认库通过 VS Code 设置项 context7.defaultLibraries 配置
+ * Recommended library list with keywords for auto-resolution
  */
 export interface LibraryItem {
   id: string
   name: string
   description: string
+  keywords?: string[]
 }
 
 export const COMMON_LIBRARIES: LibraryItem[] = [
   // === JavaScript/TypeScript ===
   {
     id: '/websites/react_dev',
-    name: 'react',
+    name: 'React',
     description: 'A JavaScript library for building UIs',
+    keywords: ['react', 'React', 'react-dom'],
   },
   {
     id: '/vuejs/vue',
-    name: 'vue',
+    name: 'Vue',
     description: 'The Progressive JavaScript Framework',
+    keywords: ['vue', 'Vue', 'vuejs'],
   },
   {
     id: '/microsoft/TypeScript',
-    name: 'typescript',
+    name: 'TypeScript',
     description: 'JavaScript with syntax for types',
+    keywords: ['typescript', 'TypeScript', 'ts'],
   },
   {
     id: '/vercel/next.js',
-    name: 'next.js',
+    name: 'Next.js',
     description: 'The React Framework for Production',
+    keywords: ['next', 'next.js', 'Next.js'],
   },
   {
     id: '/tailwindlabs/tailwindcss',
-    name: 'tailwindcss',
+    name: 'Tailwind CSS',
     description: 'A utility-first CSS framework',
+    keywords: ['tailwindcss', 'tailwind', 'Tailwind'],
   },
   {
     id: '/vitejs/vite',
-    name: 'vite',
+    name: 'Vite',
     description: 'Next generation frontend tooling',
+    keywords: ['vite', 'Vite'],
   },
   {
     id: '/prisma/prisma',
-    name: 'prisma',
+    name: 'Prisma',
     description: 'Next-generation ORM',
+    keywords: ['prisma', 'Prisma', '@prisma/client'],
   },
   {
     id: '/colinhacks/zod',
-    name: 'zod',
+    name: 'Zod',
     description: 'TypeScript-first schema validation',
+    keywords: ['zod', 'Zod'],
   },
   {
     id: '/pmndrs/zustand',
-    name: 'zustand',
+    name: 'Zustand',
     description: 'Bear necessities for state management',
+    keywords: ['zustand', 'Zustand'],
   },
   {
     id: '/microsoft/playwright',
-    name: 'playwright',
+    name: 'Playwright',
     description: 'End-to-end testing',
+    keywords: ['playwright', 'Playwright', '@playwright/test'],
   },
 
   // === Python ===
   {
     id: '/pallets/flask',
-    name: 'flask',
+    name: 'Flask',
     description: 'Python micro web framework',
+    keywords: ['flask', 'Flask'],
   },
   {
     id: '/fastapi/fastapi',
-    name: 'fastapi',
+    name: 'FastAPI',
     description: 'Modern, fast web framework for Python',
+    keywords: ['fastapi', 'FastAPI'],
   },
   {
     id: '/encode/httpx',
-    name: 'httpx',
+    name: 'HTTPX',
     description: 'Next generation HTTP client for Python',
+    keywords: ['httpx', 'HTTPX'],
   },
   {
     id: '/pydantic/pydantic',
-    name: 'pydantic',
+    name: 'Pydantic',
     description: 'Data validation using Python type hints',
+    keywords: ['pydantic', 'Pydantic'],
   },
   {
     id: '/sqlalchemy/sqlalchemy',
-    name: 'sqlalchemy',
+    name: 'SQLAlchemy',
     description: 'Python SQL toolkit and ORM',
+    keywords: ['sqlalchemy', 'SQLAlchemy'],
   },
 
   // === CSS ===
   {
     id: '/twbs/bootstrap',
-    name: 'bootstrap',
+    name: 'Bootstrap',
     description: 'Popular CSS framework',
+    keywords: ['bootstrap', 'Bootstrap'],
   },
   {
     id: '/animate-css/animate.css',
-    name: 'animate.css',
+    name: 'Animate.css',
     description: 'Cross-browser CSS animations',
+    keywords: ['animate.css', 'animate-css'],
   },
 ]
 

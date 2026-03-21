@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { DocSearchViewProvider } from '../src/providers/DocSearchViewProvider'
 import { Context7Client } from '../src/api/context7'
+import { LibraryService } from '../src/services/LibraryService'
 import * as vscode from 'vscode'
 import { createMockSecretStorage } from './__mocks__/vscode'
 
@@ -74,8 +74,8 @@ vi.mock('vscode', () => ({
   CancellationToken: {},
 }))
 
-describe('DocSearchViewProvider - Library Management', () => {
-  let provider: DocSearchViewProvider
+describe('LibraryService - Library Management', () => {
+  let libraryService: LibraryService
   let mockContext: MockExtensionContext
   let mockClient: Context7Client
   let configGet: ReturnType<typeof vi.fn>
@@ -106,7 +106,7 @@ describe('DocSearchViewProvider - Library Management', () => {
     }
 
     mockClient = new Context7Client(mockContext.secrets)
-    provider = new DocSearchViewProvider(
+    libraryService = new LibraryService(
       asExtensionContext(mockContext),
       mockClient,
     )

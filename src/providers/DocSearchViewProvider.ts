@@ -4,6 +4,7 @@ import { LibraryService, type LibraryInfo } from '../services/LibraryService'
 import { SearchService } from '../services/SearchService'
 import { HistoryService } from '../services/HistoryService'
 import { BookmarkService } from '../services/BookmarkService'
+import { I18nService } from '../services/I18nService'
 import { LibraryDetector } from '../utils/libraryDetector'
 import { buildHtml, type HtmlOptions } from './webview/HtmlBuilder'
 import { MessageHandler, type MessageContext } from './webview/MessageHandler'
@@ -27,6 +28,7 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
   private readonly _messageHandler: MessageHandler
   private readonly _libraryPicker: LibraryPicker
   private readonly _historyPicker: HistoryPicker
+  private readonly _i18n: I18nService
 
   private _currentTheme: string = 'dark'
   private _currentLibraryId?: string
@@ -41,6 +43,7 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
     this._context = context
     this._client = client
     this._libraryService = libraryService
+    this._i18n = I18nService.instance
     this._searchService = new SearchService()
     this._historyService = new HistoryService(context)
     this._bookmarkService = new BookmarkService(context)
@@ -134,8 +137,8 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
     await this._libraryPicker.selectLibrary('search', async (libraryId) => {
       const library = this._libraryService.findLibraryById(libraryId)
       const query = await vscode.window.showInputBox({
-        prompt: `Search ${library?.name || libraryId} documentation`,
-        placeHolder: 'e.g., useState hook usage',
+        prompt: this._i18n.t('label.searchIn', { query: library?.name || libraryId }),
+        placeHolder: this._i18n.t('placeholder.searchInput'),
       })
       if (query) {
         await this._handleSearch(libraryId, query)
@@ -151,12 +154,13 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
   }
 
   /**
-   * 从选中内容搜索文档
+   * Search documentation from selection
+   * Flow: Detect keyword → Resolve → Search (or let user select)
    */
   public async searchSelection(): Promise<void> {
     const editor = vscode.window.activeTextEditor
     if (!editor) {
-      vscode.window.showWarningMessage('No active editor')
+      vscode.window.showWarningMessage(this._i18n.t('message.noActiveEditor'))
       return
     }
 
@@ -164,56 +168,29 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
     const selectedText = editor.document.getText(selection).trim()
 
     if (!selectedText) {
-      vscode.window.showWarningMessage('No text selected')
+      vscode.window.showWarningMessage(this._i18n.t('message.noTextSelected'))
       return
     }
 
-    // 检测库
+    // Detect keyword from selection
     const detector = new LibraryDetector()
-    const libraryInfo = await detector.detectLibraryFromSelection()
+    const detectedInfo = await detector.detectLibraryFromSelection()
+    const keyword = detectedInfo?.name || ''
 
-    // 情况1：标准库检测
-    if (libraryInfo && libraryInfo.details.isStdlib) {
-      const { getStdlibContext7Id } = await import('../utils/libraryDetector')
-      const stdlibId = getStdlibContext7Id(libraryInfo.name)
-      if (stdlibId) {
-        // 确保标准库在用户库列表中
-        await this._libraryService.addLibrary(stdlibId, libraryInfo.name)
-        await this._handleSearch(stdlibId, selectedText)
-        return
-      }
-    }
-
-    // 情况2：LSP 高置信度检测成功
-    if (libraryInfo && libraryInfo.confidence === 'high') {
-      // 先在已知库中查找
-      const library = this._libraryService.findLibraryByName(libraryInfo.name)
+    // Step 1: Try to resolve by keyword
+    if (keyword) {
+      const library = this._libraryService.resolveByKeyword(keyword)
       if (library) {
         await this._handleSearch(library.id, selectedText)
         return
       }
-
-      // 未知库，自动解析 libraryId 并搜索（无需用户确认）
-      try {
-        const results = await this._client.searchLibraries(libraryInfo.name)
-        if (results && results.length > 0) {
-          const resolved = results[0]
-          // 添加到用户库
-          await this._libraryService.addLibrary(resolved.id, resolved.title)
-          await this._handleSearch(resolved.id, selectedText)
-          return
-        }
-      } catch (error) {
-        console.error('[Context7] Auto-resolve failed:', error)
-      }
     }
 
-    // 情况3：低置信度或检测失败 → 弹出选择器
-    const searchName = libraryInfo?.name || ''
-    const result = await this._libraryPicker.selectLibraryForSearch(searchName)
+    // Step 2: Not found → Search and let user select
+    const result = await this._libraryService.searchAndSelectLibrary(keyword)
 
     if (result) {
-      await this._handleSearch(result.id, selectedText)
+      await this._handleSearch(result.library.id, selectedText)
     }
   }
 
@@ -233,7 +210,7 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
 
     if (!this._view) {
       console.error('[Context7] View still not available after focus')
-      vscode.window.showWarningMessage('Please open Context7 sidebar first')
+      vscode.window.showWarningMessage(this._i18n.t('message.pleaseOpenSidebar'))
       return
     }
 
@@ -280,7 +257,7 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
    */
   private async _handleRefresh(): Promise<void> {
     if (!this._currentLibraryId || !this._currentQuery) {
-      vscode.window.showWarningMessage('No search to refresh')
+      vscode.window.showWarningMessage(this._i18n.t('message.noSearchToRefresh'))
       return
     }
 
@@ -319,26 +296,26 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
       !this._currentLibraryName ||
       !this._currentQuery
     ) {
-      vscode.window.showWarningMessage('No search context')
+      vscode.window.showWarningMessage(this._i18n.t('message.noSearchContext'))
       return
     }
 
     const results = this._searchService.getLastResults()
     const result = results[resultIndex]
     if (!result) {
-      vscode.window.showWarningMessage('Result not found')
+      vscode.window.showWarningMessage(this._i18n.t('message.resultNotFound'))
       return
     }
 
     // 获取标签和备注
     const tagsInput = await vscode.window.showInputBox({
-      prompt: 'Add tags (comma-separated)',
-      placeHolder: 'e.g., hooks, state, tutorial',
+      prompt: this._i18n.t('label.addTags'),
+      placeHolder: 'hooks, state, tutorial',
     })
 
     const note = await vscode.window.showInputBox({
-      prompt: 'Add a note (optional)',
-      placeHolder: 'Description for this bookmark',
+      prompt: this._i18n.t('label.addNote'),
+      placeHolder: this._i18n.t('placeholder.addNote'),
     })
 
     const tags = tagsInput
@@ -360,7 +337,7 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
       note: note || '',
     })
 
-    vscode.window.showInformationMessage('Added to bookmarks')
+    vscode.window.showInformationMessage(this._i18n.t('message.addedToBookmarks'))
     this._sendBookmarksUpdate()
   }
 
@@ -427,6 +404,19 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
       markedUri,
       cssUri,
       csp,
+      translations: {
+        searchDocumentation: this._i18n.t('webview.searchDocumentation'),
+        clickSearchHint: this._i18n.t('webview.clickSearchHint'),
+        all: this._i18n.t('webview.all'),
+        code: this._i18n.t('webview.code'),
+        info: this._i18n.t('webview.info'),
+        toggleWrap: this._i18n.t('webview.toggleWrap'),
+        refresh: this._i18n.t('webview.refresh'),
+        copy: this._i18n.t('webview.copy'),
+        insert: this._i18n.t('webview.insert'),
+        copied: this._i18n.t('webview.copied'),
+        noResults: this._i18n.t('webview.noResults'),
+      },
     }
 
     return buildHtml(options)

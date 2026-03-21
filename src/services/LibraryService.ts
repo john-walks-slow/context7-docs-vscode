@@ -1,40 +1,88 @@
 import * as vscode from 'vscode'
 import { Context7Client } from '../api/context7'
+import { COMMON_LIBRARIES } from '../constants/libraries'
+import type { Library, LibraryInfo } from '../types'
 
 /**
- * 库数据结构
- */
-export interface Library {
-  id: string
-  name: string
-}
-
-/**
- * 库查询结果
- */
-export interface LibraryInfo {
-  id: string
-  name: string
-}
-
-/**
- * 库管理服务
- * 负责库的增删改查
+ * Library management service
+ * Handles library CRUD operations and keyword resolution
  *
- * 设计原则：
- * - 用户库直接存储在 VS Code 设置项 context7.libraries
- * - 预设库是设置项的默认值（在 package.json 中定义）
- * - 所有操作直接修改设置项
+ * Data sources:
+ * - COMMON_LIBRARIES: Preset libraries with keywords
+ * - User libraries: Stored in VS Code settings (context7.libraries)
  */
 export class LibraryService {
   private readonly _client: Context7Client
+  private _keywordIndex: Map<string, string> | null = null
 
   constructor(_context: vscode.ExtensionContext, client: Context7Client) {
     this._client = client
   }
 
   /**
-   * 获取用户库列表（从设置读取）
+   * Resolve library ID by keyword
+   * Searches preset libraries first, then user libraries
+   */
+  public resolveByKeyword(keyword: string): LibraryInfo | undefined {
+    const normalizedKeyword = keyword.toLowerCase().trim()
+    const index = this._getKeywordIndex()
+    const libraryId = index.get(normalizedKeyword)
+
+    if (libraryId) {
+      const library = this.findLibraryById(libraryId)
+      return library
+    }
+
+    return undefined
+  }
+
+  /**
+   * Build keyword → library ID index
+   * Combines COMMON_LIBRARIES and user libraries
+   */
+  private _getKeywordIndex(): Map<string, string> {
+    if (this._keywordIndex) {
+      return this._keywordIndex
+    }
+
+    const index = new Map<string, string>()
+
+    // Index from COMMON_LIBRARIES
+    for (const lib of COMMON_LIBRARIES) {
+      if (lib.keywords) {
+        for (const kw of lib.keywords) {
+          index.set(kw.toLowerCase(), lib.id)
+        }
+      }
+      // Also index the name
+      index.set(lib.name.toLowerCase(), lib.id)
+    }
+
+    // Index from user libraries
+    const userLibraries = this.getLibraries()
+    for (const lib of userLibraries) {
+      if (lib.keywords) {
+        for (const kw of lib.keywords) {
+          index.set(kw.toLowerCase(), lib.id)
+        }
+      }
+      // Also index the name
+      index.set(lib.name.toLowerCase(), lib.id)
+    }
+
+    this._keywordIndex = index
+    return index
+  }
+
+  /**
+   * Invalidate keyword index (call after modifying libraries)
+   */
+  private _invalidateKeywordIndex(): void {
+    this._keywordIndex = null
+  }
+
+  /**
+   * Get user libraries from settings
    */
   public getLibraries(): Library[] {
     const config = vscode.workspace.getConfiguration('context7')
@@ -42,26 +90,60 @@ export class LibraryService {
   }
 
   /**
-   * 添加库
+   * Add library with keywords
    */
-  public async addLibrary(id: string, name: string): Promise<void> {
+  public async addLibrary(
+    id: string,
+    name: string,
+    keywords?: string[],
+  ): Promise<void> {
     const libraries = this.getLibraries()
-    if (!libraries.some((lib) => lib.id === id)) {
-      libraries.push({ id, name })
-      await this._saveLibraries(libraries)
+    const existing = libraries.find((lib) => lib.id === id)
+
+    if (existing) {
+      // Merge keywords if library already exists
+      if (keywords) {
+        const existingKeywords = existing.keywords || []
+        const mergedKeywords = [...new Set([...existingKeywords, ...keywords])]
+        existing.keywords = mergedKeywords
+      }
+    } else {
+      libraries.push({ id, name, keywords })
+    }
+
+    await this._saveLibraries(libraries)
+    this._invalidateKeywordIndex()
+  }
+
+  /**
+   * Add keyword to existing library
+   */
+  public async addKeyword(libraryId: string, keyword: string): Promise<void> {
+    const libraries = this.getLibraries()
+    const lib = libraries.find((l) => l.id === libraryId)
+
+    if (lib) {
+      const keywords = lib.keywords || []
+      if (!keywords.includes(keyword)) {
+        keywords.push(keyword)
+        lib.keywords = keywords
+        await this._saveLibraries(libraries)
+        this._invalidateKeywordIndex()
+      }
     }
   }
 
   /**
-   * 删除库
+   * Remove library
    */
   public async removeLibrary(id: string): Promise<void> {
     const libraries = this.getLibraries().filter((lib) => lib.id !== id)
     await this._saveLibraries(libraries)
+    this._invalidateKeywordIndex()
   }
 
   /**
-   * 编辑库 ID
+   * Edit library ID
    */
   public async editLibrary(name: string, newId: string): Promise<void> {
     const libraries = this.getLibraries()
@@ -69,91 +151,95 @@ export class LibraryService {
     if (lib) {
       lib.id = newId
       await this._saveLibraries(libraries)
+      this._invalidateKeywordIndex()
     }
   }
 
   /**
-   * 根据库名查找库
-   */
-  public findLibraryByName(name: string): LibraryInfo | undefined {
-    const normalizedName = name.toLowerCase().replace(/^@/, '')
-    const libraries = this.getLibraries()
-    const match = libraries.find(
-      (lib) =>
-        lib.name.toLowerCase() === normalizedName ||
-        lib.name.toLowerCase().replace(/^@/, '') === normalizedName,
-    )
-    return match ? { id: match.id, name: match.name } : undefined
-  }
-
-  /**
-   * 根据 ID 查找库
+   * Find library by ID (searches presets + user libraries)
    */
   public findLibraryById(id: string): LibraryInfo | undefined {
-    const libraries = this.getLibraries()
-    const match = libraries.find((lib) => lib.id === id)
-    return match ? { id: match.id, name: match.name } : undefined
+    // Check user libraries first
+    const userLibraries = this.getLibraries()
+    const userMatch = userLibraries.find((lib) => lib.id === id)
+    if (userMatch) {
+      return { id: userMatch.id, name: userMatch.name }
+    }
+
+    // Check preset libraries
+    const presetMatch = COMMON_LIBRARIES.find((lib) => lib.id === id)
+    if (presetMatch) {
+      return { id: presetMatch.id, name: presetMatch.name }
+    }
+
+    return undefined
   }
 
   /**
-   * 获取所有库（按字母排序）
+   * Get all libraries (presets + user libraries, sorted)
    */
   public getSortedLibraries(): Library[] {
-    return [...this.getLibraries()].sort((a, b) =>
-      a.name.localeCompare(b.name),
-    )
+    const userLibraries = this.getLibraries()
+    const userIds = new Set(userLibraries.map((l) => l.id))
+
+    // Combine: user libraries + preset libraries (not in user list)
+    const allLibraries = [
+      ...userLibraries,
+      ...COMMON_LIBRARIES.filter((l) => !userIds.has(l.id)).map((l) => ({
+        id: l.id,
+        name: l.name,
+        keywords: l.keywords,
+      })),
+    ]
+
+    return allLibraries.sort((a, b) => a.name.localeCompare(b.name))
   }
 
   /**
-   * 搜索并添加库
-   * @param presetName 预填的库名
-   * @param continueSearch 是否返回库信息以继续搜索
-   * @param skipConfirm 是否跳过输入确认（直接用 presetName 搜索）
+   * Search for library and return selection
+   * @param initialKeyword Pre-filled keyword
+   * @returns Selected library info or undefined
    */
-  public async searchAndAddLibrary(
-    presetName?: string,
-    continueSearch: boolean = false,
-    skipConfirm: boolean = false,
-  ): Promise<LibraryInfo | undefined> {
-    let currentName = presetName ?? ''
+  public async searchAndSelectLibrary(
+    initialKeyword?: string,
+  ): Promise<{ library: LibraryInfo; keyword: string } | undefined> {
+    let currentKeyword = initialKeyword ?? ''
 
     while (true) {
-      const name =
-        skipConfirm && currentName
-          ? currentName
-          : await vscode.window.showInputBox({
-              prompt: 'Enter library name (ESC to go back)',
-              placeHolder: 'e.g., axios, lodash',
-              value: currentName,
-            })
+      const keyword =
+        currentKeyword ||
+        (await vscode.window.showInputBox({
+          prompt: 'Enter library keyword to search',
+          placeHolder: 'e.g., axios, lodash',
+          value: currentKeyword,
+        }))
 
-      skipConfirm = false
-
-      if (!name) {
+      if (!keyword) {
         return undefined
       }
 
-      currentName = name
+      currentKeyword = keyword
 
       try {
         const results = await vscode.window.withProgress(
           {
             location: vscode.ProgressLocation.Notification,
-            title: `Searching "${name}"...`,
+            title: `Searching "${keyword}"...`,
             cancellable: false,
           },
           async () => {
-            return await this._client.searchLibraries(name)
+            return await this._client.searchLibraries(keyword)
           },
         )
 
         if (!results || results.length === 0) {
           const retry = await vscode.window.showErrorMessage(
-            `Could not find library "${name}"`,
+            `Could not find library "${keyword}"`,
             'Try Again',
             'Cancel',
           )
           if (retry === 'Try Again') {
+            currentKeyword = ''
             continue
           }
           return undefined
@@ -174,8 +260,7 @@ export class LibraryService {
             libraryTitle: r.title,
           })),
           {
-            label: '$(arrow-left) Back to search',
-            description: 'Search with a different name',
+            label: '$(arrow-left) Search with different keyword',
             libraryId: '__back__',
             libraryTitle: '',
             isBack: true,
@@ -183,7 +268,7 @@ export class LibraryService {
         ]
 
         const selected = await vscode.window.showQuickPick(items, {
-          placeHolder: `Found ${results.length} result${results.length > 1 ? 's' : ''}. Select to add.`,
+          placeHolder: `Select library for "${keyword}"`,
         })
 
         if (!selected) {
@@ -191,21 +276,22 @@ export class LibraryService {
         }
 
         if (selected.isBack) {
+          currentKeyword = ''
           continue
         }
 
-        await this.addLibrary(selected.libraryId, selected.libraryTitle.toLowerCase())
-        vscode.window.showInformationMessage(
-          `Added "${selected.libraryTitle}" to your libraries`,
-        )
+        // Auto-associate keyword with library
+        await this.addLibrary(selected.libraryId, selected.libraryTitle, [
+          keyword.toLowerCase(),
+        ])
 
-        if (continueSearch) {
-          return {
+        return {
+          library: {
             id: selected.libraryId,
-            name: selected.libraryTitle.toLowerCase(),
-          }
+            name: selected.libraryTitle,
+          },
+          keyword: keyword,
         }
-        return undefined
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error'
         const retry = await vscode.window.showErrorMessage(
@@ -222,11 +308,9 @@ export class LibraryService {
   }
 
   /**
-   * 直接通过 ID 添加库
+   * Add library by ID directly
    */
-  public async addLibraryById(
-    continueSearch: boolean = false,
-  ): Promise<LibraryInfo | undefined> {
+  public async addLibraryById(): Promise<LibraryInfo | undefined> {
     const id = await vscode.window.showInputBox({
       prompt: 'Enter library ID',
       placeHolder: '/owner/repo',
@@ -241,14 +325,11 @@ export class LibraryService {
     await this.addLibrary(id, name)
     vscode.window.showInformationMessage(`Added "${name}" to your libraries`)
 
-    if (continueSearch) {
-      return { id, name }
-    }
-    return undefined
+    return { id, name }
   }
 
   /**
-   * 保存库列表到设置
+   * Save libraries to settings
    */
   private async _saveLibraries(libraries: Library[]): Promise<void> {
     const config = vscode.workspace.getConfiguration('context7')

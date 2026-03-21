@@ -1,7 +1,27 @@
 import * as vscode from 'vscode'
 
 /**
- * 基础库选择项
+ * Library data structure
+ * - id: Context7 library ID (e.g., "/websites/react_dev")
+ * - name: Display name (e.g., "React")
+ * - keywords: Associated keywords for auto-resolution (e.g., ["react", "React", "react-dom"])
+ */
+export interface Library {
+  id: string
+  name: string
+  keywords?: string[]
+}
+
+/**
+ * Library info for query results
+ */
+export interface LibraryInfo {
+  id: string
+  name: string
+}
+
+/**
+ * Base library quick pick item
  */
 export interface BaseQuickPickItem extends vscode.QuickPickItem {
   libraryId: string

@@ -1,179 +1,30 @@
 import * as vscode from 'vscode'
-import type { LibraryService, LibraryInfo } from '../../services/LibraryService'
+import type { LibraryService } from '../../services/LibraryService'
+import type { LibraryInfo } from '../../types'
+import { I18nService } from '../../services/I18nService'
 import {
   createLibrarySeparatorItem,
   type UserLibraryQuickPickItem,
 } from '../../types'
 
-/** 动态搜索项的 ID */
+/** Dynamic search item ID */
 const SEARCH_INPUT_ITEM_ID = '__search_input__'
 
 /**
- * 库选择器
- * 负责处理库的选择、搜索和添加
+ * Library picker
+ * Handles library selection, search, and management
  */
 export class LibraryPicker {
-  constructor(private readonly _libraryService: LibraryService) {}
+  private readonly _i18n: I18nService
 
-  /**
-   * 选择库（搜索模式）
-   * 选择后返回库信息，由调用者决定后续操作
-   */
-  async selectLibraryForSearch(
-    searchName?: string,
-  ): Promise<LibraryInfo | undefined> {
-    if (searchName) {
-      const choice = await vscode.window.showQuickPick(
-        [
-          {
-            label: `Search "${searchName}" in Context7`,
-            description: 'Resolve library ID',
-            id: '__search__',
-          },
-          {
-            label: 'Choose from library list',
-            description: 'Select from presets or your libraries',
-            id: '__list__',
-          },
-        ],
-        {
-          placeHolder: `Detected library: "${searchName}" - not in your libraries`,
-        },
-      )
-
-      if (!choice) {
-        return undefined
-      }
-
-      if (choice.id === '__search__') {
-        return await this._libraryService.searchAndAddLibrary(
-          searchName,
-          true,
-          true,
-        )
-      }
-      // 走列表选择
-      return await this.pickLibraryFromList()
-    }
-
-    return await this.pickLibraryFromList()
+  constructor(private readonly _libraryService: LibraryService) {
+    this._i18n = I18nService.instance
   }
 
   /**
-   * 从列表中选择库（返回库信息）
-   * 支持：输入非匹配文本时自动搜索、ESC 返回上一级
-   */
-  async pickLibraryFromList(): Promise<LibraryInfo | undefined> {
-    const libraries = this._libraryService.getSortedLibraries()
-    const libraryItems: UserLibraryQuickPickItem[] = libraries.map((lib) => ({
-      label: lib.name,
-      description: lib.id,
-      libraryId: lib.id,
-      libraryName: lib.name,
-      isUser: true,
-    }))
-
-    const quickPick = vscode.window.createQuickPick<UserLibraryQuickPickItem>()
-
-    // 初始项：库列表 + 分隔线 + 操作
-    const buildItems = (filter: string): UserLibraryQuickPickItem[] => {
-      const items: UserLibraryQuickPickItem[] = []
-
-      // 过滤库
-      const filtered = filter
-        ? libraryItems.filter(
-            (item) =>
-              item.label.toLowerCase().includes(filter.toLowerCase()) ||
-              item.description?.toLowerCase().includes(filter.toLowerCase()),
-          )
-        : libraryItems
-
-      items.push(...filtered)
-
-      // 分隔线和操作
-      items.push(createLibrarySeparatorItem())
-
-      if (filter) {
-        // 有输入时，提供"搜索 [输入]"选项
-        items.push({
-          label: `$(search) Search "${filter}" in Context7...`,
-          description: 'Resolve library ID and add',
-          libraryId: SEARCH_INPUT_ITEM_ID,
-          libraryName: filter,
-          isUser: false,
-        })
-      }
-
-      items.push({
-        label: '$(search) Search library...',
-        description: 'Search by name and add to list',
-        libraryId: '__search__',
-        libraryName: '',
-        isUser: false,
-      })
-
-      return items
-    }
-
-    quickPick.items = buildItems('')
-    quickPick.placeholder = 'Select a library or type to search'
-
-    // 动态更新项列表
-    quickPick.onDidChangeValue((value) => {
-      quickPick.items = buildItems(value)
-    })
-
-    return new Promise((resolve) => {
-      quickPick.onDidAccept(() => {
-        const selected = quickPick.activeItems[0]
-        const inputValue = quickPick.value?.trim() || ''
-        quickPick.hide()
-
-        // 判断是否有匹配的库（非分隔线、非搜索项）
-        const hasMatchedLibrary =
-          selected &&
-          selected.libraryId &&
-          selected.libraryId !== SEARCH_INPUT_ITEM_ID &&
-          selected.libraryId !== '__search__' &&
-          selected.kind !== vscode.QuickPickItemKind.Separator
-
-        if (hasMatchedLibrary) {
-          // 选中了现有库
-          resolve({ id: selected.libraryId, name: selected.libraryName })
-          return
-        }
-
-        // 输入新库名 → 直接搜索（跳过确认）
-        if (inputValue) {
-          this._libraryService
-            .searchAndAddLibrary(inputValue, true, true)
-            .then(resolve)
-          return
-        }
-
-        // 选中 "Search library..." 选项 → 弹出输入框
-        if (selected?.libraryId === '__search__') {
-          this._libraryService
-            .searchAndAddLibrary(undefined, true)
-            .then(resolve)
-          return
-        }
-
-        resolve(undefined)
-      })
-
-      quickPick.onDidHide(() => {
-        resolve(undefined)
-      })
-
-      quickPick.show()
-    })
-  }
-
-  /**
-   * 选择库（完整功能版）
-   * @param action 'search' - 选择后搜索; 'manage' - 选择后打开链接
-   * @param onSearch 搜索回调
+   * Select library (full featured)
+   * @param action 'search' - select then search; 'manage' - select then open link
+   * @param onSearch Search callback
    */
   async selectLibrary(
     action: 'search' | 'manage',
@@ -189,10 +40,16 @@ export class LibraryPicker {
       buttons: [
         {
           iconPath: new vscode.ThemeIcon('globe'),
-          tooltip: 'Open in Context7',
+          tooltip: this._i18n.t('command.openInBrowser'),
         },
-        { iconPath: new vscode.ThemeIcon('edit'), tooltip: 'Edit ID' },
-        { iconPath: new vscode.ThemeIcon('trash'), tooltip: 'Remove' },
+        {
+          iconPath: new vscode.ThemeIcon('edit'),
+          tooltip: this._i18n.t('command.editBookmark'),
+        },
+        {
+          iconPath: new vscode.ThemeIcon('trash'),
+          tooltip: this._i18n.t('command.removeBookmark'),
+        },
       ],
     }))
 
@@ -219,8 +76,8 @@ export class LibraryPicker {
       if (filter) {
         // 有输入时，提供"搜索 [输入]"选项
         items.push({
-          label: `$(search) Search "${filter}" in Context7...`,
-          description: 'Resolve library ID and add',
+          label: `$(search) ${this._i18n.t('label.searching', { name: filter })}`,
+          description: this._i18n.t('description.resolveLibrary'),
           libraryId: SEARCH_INPUT_ITEM_ID,
           libraryName: filter,
           isUser: false,
@@ -228,16 +85,16 @@ export class LibraryPicker {
       }
 
       items.push({
-        label: '$(search) Search library...',
-        description: 'Search by name and add to list',
+        label: `$(search) ${this._i18n.t('label.searchLibrary')}`,
+        description: this._i18n.t('description.searchAddLibrary'),
         libraryId: '__search__',
         libraryName: '',
         isUser: false,
       })
 
       items.push({
-        label: '$(add) Add library by ID...',
-        description: 'Enter ID directly (e.g., /reactjs/react.dev)',
+        label: `$(add) ${this._i18n.t('label.addLibraryById')}`,
+        description: this._i18n.t('description.enterIdDirectly'),
         libraryId: '__addById__',
         libraryName: '',
         isUser: false,
@@ -249,8 +106,8 @@ export class LibraryPicker {
     quickPick.items = buildItems('')
     quickPick.placeholder =
       action === 'search'
-        ? 'Choose a library or type to search'
-        : 'Select a library to manage or type to search'
+        ? this._i18n.t('placeholder.searchLibrary')
+        : this._i18n.t('placeholder.manageLibrary')
 
     // 动态更新项列表
     quickPick.onDidChangeValue((value) => {
@@ -261,7 +118,7 @@ export class LibraryPicker {
     quickPick.onDidTriggerItemButton(async (event) => {
       const item = event.item
 
-      if (event.button.tooltip === 'Open in Context7') {
+      if (event.button.tooltip === this._i18n.t('command.openInBrowser')) {
         const url = `https://context7.com${item.libraryId}`
         await vscode.env.openExternal(vscode.Uri.parse(url))
         return
@@ -271,13 +128,13 @@ export class LibraryPicker {
         return
       }
 
-      if (event.button.tooltip === 'Remove') {
+      if (event.button.tooltip === this._i18n.t('command.removeBookmark')) {
         const confirm = await vscode.window.showWarningMessage(
-          `Remove "${item.libraryName}" from your libraries?`,
-          'Remove',
-          'Cancel',
+          this._i18n.t('message.confirmRemove', { name: item.libraryName }),
+          this._i18n.t('button.remove'),
+          this._i18n.t('button.cancel'),
         )
-        if (confirm === 'Remove') {
+        if (confirm === this._i18n.t('button.remove')) {
           await this._libraryService.removeLibrary(item.libraryId)
           // 刷新列表
           const idx = quickPick.items.findIndex(
@@ -287,11 +144,13 @@ export class LibraryPicker {
             quickPick.items = quickPick.items.filter((_, i) => i !== idx)
           }
         }
-      } else if (event.button.tooltip === 'Edit ID') {
+      } else if (
+        event.button.tooltip === this._i18n.t('command.editBookmark')
+      ) {
         const newId = await vscode.window.showInputBox({
-          prompt: `Edit ID for ${item.libraryName}`,
+          prompt: this._i18n.t('message.editIdFor', { name: item.libraryName }),
           value: item.libraryId,
-          placeHolder: '/owner/repo',
+          placeHolder: this._i18n.t('placeholder.enterLibraryId'),
         })
         if (newId && newId !== item.libraryId) {
           await this._libraryService.editLibrary(item.libraryName, newId)
@@ -325,36 +184,28 @@ export class LibraryPicker {
         return
       }
 
-      // 输入新库名 → 直接搜索（跳过确认）
+      // Input new library name → search directly
       if (inputValue) {
-        const result = await this._libraryService.searchAndAddLibrary(
-          inputValue,
-          action === 'search',
-          true, // skipConfirm
-        )
+        const result =
+          await this._libraryService.searchAndSelectLibrary(inputValue)
         if (result && action === 'search' && onSearch) {
-          await onSearch(result.id, result.name)
+          await onSearch(result.library.id, result.library.name)
         }
         return
       }
 
-      // 选中 "Search library..." 选项 → 弹出输入框
+      // Selected "Search library..." option → show input box
       if (selected?.libraryId === '__search__') {
-        const result = await this._libraryService.searchAndAddLibrary(
-          undefined,
-          action === 'search',
-        )
+        const result = await this._libraryService.searchAndSelectLibrary()
         if (result && action === 'search' && onSearch) {
-          await onSearch(result.id, result.name)
+          await onSearch(result.library.id, result.library.name)
         }
         return
       }
 
-      // 通过 ID 添加
+      // Add by ID
       if (selected?.libraryId === '__addById__') {
-        const result = await this._libraryService.addLibraryById(
-          action === 'search',
-        )
+        const result = await this._libraryService.addLibraryById()
         if (result && action === 'search' && onSearch) {
           await onSearch(result.id, result.name)
         }

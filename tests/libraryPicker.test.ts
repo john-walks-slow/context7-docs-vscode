@@ -1,5 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+// ==================== Mock I18nService ====================
+vi.mock('../src/services/I18nService', () => ({
+  I18nService: {
+    instance: {
+      t: (key: string, params?: Record<string, string>) =>
+        params?.name ? `${key}:${params.name}` : key,
+    },
+  },
+}))
+
 // ==================== Mock vscode 模块 ====================
 
 // 存储当前 QuickPick 实例，供测试访问
@@ -107,10 +117,8 @@ vi.mock('vscode', () => ({
   SecretStorage: {},
 }))
 
-import type {
-  LibraryService,
-  LibraryInfo,
-} from '../src/services/LibraryService'
+import type { LibraryService } from '../src/services/LibraryService'
+import type { LibraryInfo } from '../src/types'
 import * as vscode from 'vscode'
 import { LibraryPicker } from '../src/providers/pickers/LibraryPicker'
 
@@ -119,9 +127,9 @@ describe('LibraryPicker', () => {
   let mockLibraryService: LibraryService
 
   const mockLibraries = [
-    { id: '/facebook/react', name: 'react' },
-    { id: '/vuejs/vue', name: 'vue' },
-    { id: '/axios/axios', name: 'axios' },
+    { id: '/facebook/react', name: 'react', keywords: ['react', 'React'] },
+    { id: '/vuejs/vue', name: 'vue', keywords: ['vue', 'Vue'] },
+    { id: '/axios/axios', name: 'axios', keywords: ['axios'] },
   ]
 
   beforeEach(() => {
@@ -131,13 +139,14 @@ describe('LibraryPicker', () => {
     mockLibraryService = {
       getLibraries: vi.fn(() => mockLibraries),
       getSortedLibraries: vi.fn(() => mockLibraries),
-      searchAndAddLibrary: vi.fn(),
+      searchAndSelectLibrary: vi.fn(),
       addLibraryById: vi.fn(),
       addLibrary: vi.fn(),
+      addKeyword: vi.fn(),
       removeLibrary: vi.fn(),
       editLibrary: vi.fn(),
       findLibraryById: vi.fn(),
-      findLibraryByName: vi.fn(),
+      resolveByKeyword: vi.fn(),
     } as unknown as LibraryService
 
     libraryPicker = new LibraryPicker(mockLibraryService)
@@ -170,10 +179,10 @@ describe('LibraryPicker', () => {
       expect(vscode.window.showInputBox).not.toHaveBeenCalled()
     })
 
-    it('选择 "Search library..." 时调用 searchAndAddLibrary 然后 onSearch', async () => {
+    it('选择 "Search library..." 时调用 searchAndSelectLibrary 然后 onSearch', async () => {
       const onSearch = vi.fn()
-      const mockResult: LibraryInfo = { id: '/lodash/lodash', name: 'lodash' }
-      vi.mocked(mockLibraryService.searchAndAddLibrary).mockResolvedValue(
+      const mockResult = { library: { id: '/lodash/lodash', name: 'lodash' }, keyword: 'lodash' }
+      vi.mocked(mockLibraryService.searchAndSelectLibrary).mockResolvedValue(
         mockResult,
       )
 
@@ -186,10 +195,7 @@ describe('LibraryPicker', () => {
       await qp._selectItem(searchOption)
       await promise
 
-      expect(mockLibraryService.searchAndAddLibrary).toHaveBeenCalledWith(
-        undefined,
-        true,
-      )
+      expect(mockLibraryService.searchAndSelectLibrary).toHaveBeenCalledWith()
       expect(onSearch).toHaveBeenCalledWith('/lodash/lodash', 'lodash')
     })
 
@@ -207,13 +213,13 @@ describe('LibraryPicker', () => {
       await qp._selectItem(addByIdOption)
       await promise
 
-      expect(mockLibraryService.addLibraryById).toHaveBeenCalledWith(true)
+      expect(mockLibraryService.addLibraryById).toHaveBeenCalledWith()
       expect(onSearch).toHaveBeenCalledWith('/custom/lib', 'lib')
     })
 
-    it('searchAndAddLibrary 返回 undefined 时不调用 onSearch', async () => {
+    it('searchAndSelectLibrary 返回 undefined 时不调用 onSearch', async () => {
       const onSearch = vi.fn()
-      vi.mocked(mockLibraryService.searchAndAddLibrary).mockResolvedValue(
+      vi.mocked(mockLibraryService.searchAndSelectLibrary).mockResolvedValue(
         undefined,
       )
 
@@ -268,7 +274,7 @@ describe('LibraryPicker', () => {
       const reactItem = qp.items.find(
         (i: any) => i.libraryId === '/facebook/react',
       )
-      await qp._clickButton(reactItem, { tooltip: 'Open in Context7' })
+      await qp._clickButton(reactItem, { tooltip: 'command.openInBrowser' })
       await promise
 
       expect(vscode.env.openExternal).toHaveBeenCalled()
@@ -276,7 +282,7 @@ describe('LibraryPicker', () => {
 
     it('点击 "Remove" 按钮删除用户库', async () => {
       vi.mocked(vscode.window.showWarningMessage).mockResolvedValue(
-        'Remove' as any,
+        'button.remove' as any,
       )
 
       const promise = libraryPicker.selectLibrary('search')
@@ -287,7 +293,7 @@ describe('LibraryPicker', () => {
       )
       expect(axiosItem?.isUser).toBe(true)
 
-      await qp._clickButton(axiosItem, { tooltip: 'Remove' })
+      await qp._clickButton(axiosItem, { tooltip: 'command.removeBookmark' })
       await promise
 
       expect(mockLibraryService.removeLibrary).toHaveBeenCalledWith(
@@ -306,7 +312,7 @@ describe('LibraryPicker', () => {
       const axiosItem = qp.items.find(
         (i: any) => i.libraryId === '/axios/axios',
       )
-      await qp._clickButton(axiosItem, { tooltip: 'Edit ID' })
+      await qp._clickButton(axiosItem, { tooltip: 'command.editBookmark' })
       await promise
 
       expect(mockLibraryService.editLibrary).toHaveBeenCalledWith(
@@ -317,7 +323,7 @@ describe('LibraryPicker', () => {
 
     it('用户取消删除时不调用 removeLibrary', async () => {
       vi.mocked(vscode.window.showWarningMessage).mockResolvedValue(
-        'Cancel' as any,
+        'button.cancel' as any,
       )
 
       const promise = libraryPicker.selectLibrary('search')
@@ -326,7 +332,7 @@ describe('LibraryPicker', () => {
       const axiosItem = qp.items.find(
         (i: any) => i.libraryId === '/axios/axios',
       )
-      await qp._clickButton(axiosItem, { tooltip: 'Remove' })
+      await qp._clickButton(axiosItem, { tooltip: 'command.removeBookmark' })
       await promise
 
       expect(mockLibraryService.removeLibrary).not.toHaveBeenCalled()
@@ -344,16 +350,16 @@ describe('LibraryPicker', () => {
         (i: any) => i.libraryId === '__search_input__',
       )
       expect(dynamicSearch).toBeTruthy()
-      expect(dynamicSearch.label).toContain('unknown-lib')
+      expect(dynamicSearch.label).toContain('label.searching:unknown-lib')
 
       await qp._hide()
       await promise
     })
 
-    it('选择动态搜索项调用 searchAndAddLibrary', async () => {
+    it('选择动态搜索项调用 searchAndSelectLibrary', async () => {
       const onSearch = vi.fn()
-      const mockResult: LibraryInfo = { id: '/test/lib', name: 'lib' }
-      vi.mocked(mockLibraryService.searchAndAddLibrary).mockResolvedValue(
+      const mockResult = { library: { id: '/test/lib', name: 'lib' }, keyword: 'test-lib' }
+      vi.mocked(mockLibraryService.searchAndSelectLibrary).mockResolvedValue(
         mockResult,
       )
 
@@ -368,10 +374,8 @@ describe('LibraryPicker', () => {
       await qp._selectItem(dynamicSearch)
       await promise
 
-      expect(mockLibraryService.searchAndAddLibrary).toHaveBeenCalledWith(
+      expect(mockLibraryService.searchAndSelectLibrary).toHaveBeenCalledWith(
         'test-lib',
-        true,
-        true, // skipConfirm - 直接搜索无需确认
       )
       expect(onSearch).toHaveBeenCalledWith('/test/lib', 'lib')
     })
@@ -399,128 +403,6 @@ describe('LibraryPicker', () => {
 
       await qp._hide()
       await promise
-    })
-  })
-
-  describe('selectLibraryForSearch', () => {
-    it('检测到库名时显示两个选项', async () => {
-      const mockResult: LibraryInfo = { id: '/lodash/lodash', name: 'lodash' }
-      vi.mocked(mockLibraryService.searchAndAddLibrary).mockResolvedValue(
-        mockResult,
-      )
-
-      vi.mocked(vscode.window.showQuickPick).mockResolvedValue({
-        label: 'Search "lodash" in Context7',
-        id: '__search__',
-      } as any)
-
-      const result = await libraryPicker.selectLibraryForSearch('lodash')
-
-      expect(vscode.window.showQuickPick).toHaveBeenCalled()
-      const items = vi.mocked(vscode.window.showQuickPick).mock
-        .calls[0][0] as any[]
-      expect(items).toHaveLength(2)
-      expect(items[0].id).toBe('__search__')
-      expect(items[1].id).toBe('__list__')
-
-      expect(result).toEqual(mockResult)
-    })
-
-    it('用户取消时返回 undefined', async () => {
-      vi.mocked(vscode.window.showQuickPick).mockResolvedValue(undefined)
-
-      const result = await libraryPicker.selectLibraryForSearch('lodash')
-
-      expect(result).toBeUndefined()
-    })
-  })
-
-  describe('pickLibraryFromList', () => {
-    it('包含预设库、用户库和操作项', async () => {
-      const promise = libraryPicker.pickLibraryFromList()
-      const qp = currentQuickPick
-
-      expect(
-        qp.items.find((i: any) => i.libraryId === '/facebook/react'),
-      ).toBeTruthy()
-      expect(
-        qp.items.find((i: any) => i.libraryId === '/axios/axios'),
-      ).toBeTruthy()
-      expect(
-        qp.items.find((i: any) => i.libraryId === '__search__'),
-      ).toBeTruthy()
-
-      // 清理
-      await qp._hide()
-      await promise
-    })
-
-    it('选择已有库返回库信息', async () => {
-      const promise = libraryPicker.pickLibraryFromList()
-      const qp = currentQuickPick
-
-      const reactItem = qp.items.find(
-        (i: any) => i.libraryId === '/facebook/react',
-      )
-      await qp._selectItem(reactItem)
-      const result = await promise
-
-      expect(result).toEqual({ id: '/facebook/react', name: 'react' })
-    })
-
-    it('输入非匹配文本时显示动态搜索项', async () => {
-      const promise = libraryPicker.pickLibraryFromList()
-      const qp = currentQuickPick
-
-      // 模拟输入
-      await qp._changeValue('unknown-lib')
-
-      // 应该有动态搜索项
-      const dynamicSearch = qp.items.find(
-        (i: any) => i.libraryId === '__search_input__',
-      )
-      expect(dynamicSearch).toBeTruthy()
-      expect(dynamicSearch.label).toContain('unknown-lib')
-
-      // 清理
-      await qp._hide()
-      await promise
-    })
-
-    it('选择动态搜索项调用 searchAndAddLibrary', async () => {
-      const mockResult: LibraryInfo = { id: '/test/lib', name: 'lib' }
-      vi.mocked(mockLibraryService.searchAndAddLibrary).mockResolvedValue(
-        mockResult,
-      )
-
-      const promise = libraryPicker.pickLibraryFromList()
-      const qp = currentQuickPick
-
-      // 模拟输入
-      await qp._changeValue('test-lib')
-
-      const dynamicSearch = qp.items.find(
-        (i: any) => i.libraryId === '__search_input__',
-      )
-      await qp._selectItem(dynamicSearch)
-      const result = await promise
-
-      expect(mockLibraryService.searchAndAddLibrary).toHaveBeenCalledWith(
-        'test-lib',
-        true,
-        true, // skipConfirm - 直接搜索无需确认
-      )
-      expect(result).toEqual(mockResult)
-    })
-
-    it('ESC 时返回 undefined', async () => {
-      const promise = libraryPicker.pickLibraryFromList()
-      const qp = currentQuickPick
-
-      await qp._hide()
-      const result = await promise
-
-      expect(result).toBeUndefined()
     })
   })
 })
