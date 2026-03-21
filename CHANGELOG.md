@@ -9,6 +9,8 @@
 - Library detection fallback to language standard library when LSP is unavailable
 - Library picker groups libraries by Recent/User/Preset sections
 - Internationalization support (English/Chinese)
+- Development tasks: `watch:tsc` (TypeScript watch) and `watch-tests` (Vitest watch)
+- Launch configuration for temporary VS Code profile testing
 
 ### Changed
 
@@ -20,6 +22,7 @@
 - Sidebar title updates immediately on search start, with rollback on failure
 - Reduced max recent libraries from 5 to 1 (most recent only)
 - Added JSON schema for `context7.libraries` and `context7.pathPatterns` settings
+- Library settings now respect VS Code Profile scope (no longer forced to Global)
 
 ### Fixed
 
