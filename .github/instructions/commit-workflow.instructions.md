@@ -35,10 +35,16 @@ description: 'Use when: 提交代码、commit、更新 changelog、记录改动'
 **格式规范：**
 
 - 使用 `Added` / `Changed` / `Fixed` / `Removed` 分类
-- 每条记录简洁明了，用中文
-- 如果 `[Unreleased]` section 不存在，创建它
+- 每条记录简洁明了，用**英语**
+- 如果 `[Unreleased]` section 不存在，在文件顶部创建它
 
 ### 3. 提交代码
+
+**安全规则：**
+
+- **禁止 `git add .` 或 `git add -A`** — 可能误伤他人正在进行的修改
+- 使用 `git add <具体文件>` 逐个添加
+- 或使用 `git add -p` 交互式选择
 
 使用语义化 commit message：
 
