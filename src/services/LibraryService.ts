@@ -1,6 +1,7 @@
 import * as vscode from 'vscode'
 import { Context7Client } from '../api/context7'
 import { COMMON_LIBRARIES } from '../constants/libraries'
+import { I18nService } from './I18nService'
 import type { Library, LibraryInfo } from '../types'
 
 /**
@@ -47,27 +48,27 @@ export class LibraryService {
 
     const index = new Map<string, string>()
 
-    // Index from COMMON_LIBRARIES
+    // Index from COMMON_LIBRARIES (they have their own keywords)
     for (const lib of COMMON_LIBRARIES) {
       if (lib.keywords) {
         for (const kw of lib.keywords) {
           index.set(kw.toLowerCase(), lib.id)
         }
       }
-      // Also index the name
-      index.set(lib.name.toLowerCase(), lib.id)
     }
 
     // Index from user libraries
     const userLibraries = this.getLibraries()
     for (const lib of userLibraries) {
-      if (lib.keywords) {
+      if (lib.keywords && lib.keywords.length > 0) {
+        // Has keywords - use them
         for (const kw of lib.keywords) {
           index.set(kw.toLowerCase(), lib.id)
         }
+      } else {
+        // No keywords (legacy data) - use name as keyword
+        index.set(lib.name.toLowerCase(), lib.id)
       }
-      // Also index the name
-      index.set(lib.name.toLowerCase(), lib.id)
     }
 
     this._keywordIndex = index
@@ -197,22 +198,29 @@ export class LibraryService {
 
   /**
    * Search for library and return selection
-   * @param initialKeyword Pre-filled keyword
+   * @param searchKeyword Keyword to search in Context7
+   * @param keywordToBind Keyword to bind with library (for association)
+   * @param skipConfirm Skip input confirmation
    * @returns Selected library info or undefined
    */
   public async searchAndSelectLibrary(
-    initialKeyword?: string,
+    searchKeyword?: string,
+    keywordToBind?: string,
+    skipConfirm: boolean = false,
   ): Promise<{ library: LibraryInfo; keyword: string } | undefined> {
-    let currentKeyword = initialKeyword ?? ''
+    let currentKeyword = searchKeyword ?? ''
 
     while (true) {
-      const keyword =
-        currentKeyword ||
-        (await vscode.window.showInputBox({
-          prompt: 'Enter library keyword to search',
-          placeHolder: 'e.g., axios, lodash',
-          value: currentKeyword,
-        }))
+      const keyword = skipConfirm
+        ? currentKeyword
+        : currentKeyword ||
+          (await vscode.window.showInputBox({
+            prompt: I18nService.instance.t('prompt.enterLibraryKeyword'),
+            placeHolder: I18nService.instance.t('placeholder.libraryKeyword'),
+            value: currentKeyword,
+          }))
+
+      skipConfirm = false // Only skip first time
 
       if (!keyword) {
         return undefined
@@ -224,7 +232,7 @@ export class LibraryService {
         const results = await vscode.window.withProgress(
           {
             location: vscode.ProgressLocation.Notification,
-            title: `Searching "${keyword}"...`,
+            title: I18nService.instance.t('label.searching', { name: keyword }),
             cancellable: false,
           },
           async () => {
@@ -233,16 +241,31 @@ export class LibraryService {
         )
 
         if (!results || results.length === 0) {
-          const retry = await vscode.window.showErrorMessage(
-            `Could not find library "${keyword}"`,
-            'Try Again',
-            'Cancel',
+          // Show QuickPick instead of error popup
+          const notFoundItem = await vscode.window.showQuickPick(
+            [
+              {
+                label: `$(arrow-left) ${I18nService.instance.t('label.searchDifferentKeyword')}`,
+                description: I18nService.instance.t('description.tryAnotherSearch'),
+                id: '__retry__',
+              },
+              {
+                label: `$(close) ${I18nService.instance.t('label.cancelSearch')}`,
+                description: I18nService.instance.t('description.exitSearch'),
+                id: '__cancel__',
+              },
+            ],
+            {
+              placeHolder: I18nService.instance.t('label.noLibraryFound', { query: keyword }),
+            },
           )
-          if (retry === 'Try Again') {
-            currentKeyword = ''
-            continue
+
+          if (!notFoundItem || notFoundItem.id === '__cancel__') {
+            return undefined
           }
-          return undefined
+          // Retry with different keyword
+          currentKeyword = ''
+          continue
         }
 
         interface LibraryPickItem extends vscode.QuickPickItem {
@@ -260,7 +283,7 @@ export class LibraryService {
             libraryTitle: r.title,
           })),
           {
-            label: '$(arrow-left) Search with different keyword',
+            label: `$(arrow-left) ${I18nService.instance.t('label.searchDifferentKeyword')}`,
             libraryId: '__back__',
             libraryTitle: '',
             isBack: true,
@@ -268,11 +291,12 @@ export class LibraryService {
         ]
 
         const selected = await vscode.window.showQuickPick(items, {
-          placeHolder: `Select library for "${keyword}"`,
+          placeHolder: I18nService.instance.t('label.selectLibrary', { query: keyword }),
         })
 
+        // ESC pressed - exit and return undefined
         if (!selected) {
-          continue
+          return undefined
         }
 
         if (selected.isBack) {
@@ -281,8 +305,10 @@ export class LibraryService {
         }
 
         // Auto-associate keyword with library
+        // Use keywordToBind if provided, otherwise use search keyword
+        const keywordForBinding = keywordToBind || keyword
         await this.addLibrary(selected.libraryId, selected.libraryTitle, [
-          keyword.toLowerCase(),
+          keywordForBinding.toLowerCase(),
         ])
 
         return {
@@ -290,16 +316,16 @@ export class LibraryService {
             id: selected.libraryId,
             name: selected.libraryTitle,
           },
-          keyword: keyword,
+          keyword: keywordForBinding,
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error'
         const retry = await vscode.window.showErrorMessage(
-          `Search failed: ${message}`,
-          'Try Again',
-          'Cancel',
+          I18nService.instance.t('error.searchFailed', { error: message }),
+          I18nService.instance.t('label.tryAgain'),
+          I18nService.instance.t('label.cancelSearch'),
         )
-        if (retry === 'Try Again') {
+        if (retry === I18nService.instance.t('label.tryAgain')) {
           continue
         }
         return undefined
@@ -312,8 +338,8 @@ export class LibraryService {
    */
   public async addLibraryById(): Promise<LibraryInfo | undefined> {
     const id = await vscode.window.showInputBox({
-      prompt: 'Enter library ID',
-      placeHolder: '/owner/repo',
+      prompt: I18nService.instance.t('prompt.enterLibraryId'),
+      placeHolder: I18nService.instance.t('placeholder.enterLibraryId'),
       value: '/',
     })
 
@@ -323,7 +349,9 @@ export class LibraryService {
 
     const name = id.split('/').pop() || id
     await this.addLibrary(id, name)
-    vscode.window.showInformationMessage(`Added "${name}" to your libraries`)
+    vscode.window.showInformationMessage(
+      I18nService.instance.t('message.libraryAddedById', { name }),
+    )
 
     return { id, name }
   }

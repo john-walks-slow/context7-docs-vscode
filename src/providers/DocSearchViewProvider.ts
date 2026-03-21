@@ -188,8 +188,24 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
       }
     }
 
-    // Step 2: Not found → Search and let user select
-    const result = await this._libraryService.searchAndSelectLibrary(keyword)
+    // Step 2: Not found → Let user confirm/modify keyword, then search
+    // Show input box with detected keyword pre-filled
+    const searchKeyword = await vscode.window.showInputBox({
+      prompt: this._i18n.t('prompt.enterLibraryKeyword'),
+      placeHolder: this._i18n.t('placeholder.libraryKeyword'),
+      value: keyword,
+    })
+
+    if (!searchKeyword) {
+      return
+    }
+
+    // Pass original detected keyword for binding, searchKeyword for API search
+    const result = await this._libraryService.searchAndSelectLibrary(
+      searchKeyword, // Search term
+      keyword, // Keyword to bind (original detected keyword)
+      true, // skipConfirm - user already confirmed via input box
+    )
 
     if (result) {
       await this._handleSearch(result.library.id, selectedText)
