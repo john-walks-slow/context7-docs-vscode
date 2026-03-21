@@ -278,6 +278,14 @@ describe('LibraryService - Library Management', () => {
       expect(result3?.id).toBe('/websites/react_dev')
     })
 
+    it('should resolve standard library by name', () => {
+      expect(libraryService.resolveByKeyword('python')?.id).toBe(
+        '/python/cpython',
+      )
+      expect(libraryService.resolveByKeyword('rust')?.id).toBe('/rust-lang/rust')
+      expect(libraryService.resolveByKeyword('go')?.id).toBe('/golang/go')
+    })
+
     it('should return undefined when no match', () => {
       const result = libraryService.resolveByKeyword('nonexistent-keyword')
       expect(result).toBeUndefined()
