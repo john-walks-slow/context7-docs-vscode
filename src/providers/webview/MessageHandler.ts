@@ -2,6 +2,7 @@ import * as vscode from 'vscode'
 import type { SearchService } from '../../services/SearchService'
 import type { HistoryService } from '../../services/HistoryService'
 import type { BookmarkService } from '../../services/BookmarkService'
+import { I18nService } from '../../services/I18nService'
 
 /**
  * 消息处理器上下文
@@ -40,6 +41,12 @@ export interface MessageContext {
  * 负责处理从 Webview 发来的消息
  */
 export class MessageHandler {
+  private readonly _i18n: I18nService
+
+  constructor() {
+    this._i18n = I18nService.instance
+  }
+
   /**
    * 处理 Webview 消息
    * @param message 消息对象
@@ -63,7 +70,7 @@ export class MessageHandler {
 
       case 'copyCode':
         await vscode.env.clipboard.writeText(message.code as string)
-        vscode.window.showInformationMessage('Code copied')
+        vscode.window.showInformationMessage(this._i18n.t('message.codeCopied'))
         break
 
       case 'insertCode':

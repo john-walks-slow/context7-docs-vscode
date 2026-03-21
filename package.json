@@ -34,6 +34,28 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "localizations": [
+      {
+        "languageId": "en",
+        "languageName": "English",
+        "translations": [
+          {
+            "id": "context7-docs",
+            "path": "./locales/en.json"
+          }
+        ]
+      },
+      {
+        "languageId": "zh-cn",
+        "languageName": "简体中文",
+        "translations": [
+          {
+            "id": "context7-docs",
+            "path": "./locales/zh-cn.json"
+          }
+        ]
+      }
+    ],
     "commands": [
       {
         "command": "context7.search",

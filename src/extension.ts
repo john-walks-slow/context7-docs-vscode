@@ -2,8 +2,12 @@ import * as vscode from 'vscode'
 import { Context7Client } from './api/context7'
 import { LibraryService } from './services/LibraryService'
 import { DocSearchViewProvider } from './providers/DocSearchViewProvider'
+import { I18nService } from './services/I18nService'
 
 export async function activate(context: vscode.ExtensionContext) {
+  // 初始化国际化服务
+  const i18n = new I18nService(context)
+
   const client = new Context7Client(context.secrets)
   const libraryService = new LibraryService(context, client)
 
@@ -47,13 +51,13 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand('context7.configureApiKey', async () => {
       const apiKey = await vscode.window.showInputBox({
-        prompt: 'Enter Context7 API Key',
+        prompt: i18n.t('placeholder.enterApiKey'),
         password: true,
       })
 
       if (apiKey) {
         await client.setApiKey(apiKey)
-        vscode.window.showInformationMessage('Context7 API Key saved securely')
+        vscode.window.showInformationMessage(i18n.t('message.apiKeySaved'))
       }
     }),
   )

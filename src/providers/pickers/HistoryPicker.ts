@@ -7,16 +7,21 @@ import type {
   BookmarkService,
   BookmarkItem,
 } from '../../services/BookmarkService'
+import { I18nService } from '../../services/I18nService'
 
 /**
  * 历史/书签选择器
  * 负责显示搜索历史和收藏夹
  */
 export class HistoryPicker {
+  private readonly _i18n: I18nService
+
   constructor(
     private readonly _historyService: HistoryService,
     private readonly _bookmarkService: BookmarkService,
-  ) {}
+  ) {
+    this._i18n = I18nService.instance
+  }
 
   /**
    * 显示搜索历史
@@ -28,7 +33,9 @@ export class HistoryPicker {
     const history = this._historyService.getHistory()
 
     if (history.length === 0) {
-      vscode.window.showInformationMessage('No search history yet')
+      vscode.window.showInformationMessage(
+        this._i18n.t('message.noSearchHistory'),
+      )
       return
     }
 
@@ -39,7 +46,7 @@ export class HistoryPicker {
     }))
 
     const selected = await vscode.window.showQuickPick(items, {
-      placeHolder: 'Search history (click to search again)',
+      placeHolder: this._i18n.t('placeholder.searchHistory'),
     })
 
     if (selected) {
@@ -57,7 +64,7 @@ export class HistoryPicker {
     const bookmarks = this._bookmarkService.getBookmarks()
 
     if (bookmarks.length === 0) {
-      vscode.window.showInformationMessage('No bookmarks yet')
+      vscode.window.showInformationMessage(this._i18n.t('message.noBookmarks'))
       return
     }
 
@@ -68,20 +75,22 @@ export class HistoryPicker {
       buttons: [
         {
           iconPath: new vscode.ThemeIcon('trash'),
-          tooltip: 'Remove',
+          tooltip: this._i18n.t('button.remove'),
         },
       ],
     }))
 
     const quickPick = vscode.window.createQuickPick()
     quickPick.items = items
-    quickPick.placeholder = 'Bookmarks (click to view)'
+    quickPick.placeholder = this._i18n.t('placeholder.bookmarks')
 
     quickPick.onDidTriggerItemButton(async (event) => {
       const item = event.item as (typeof items)[0]
-      if (event.button.tooltip === 'Remove') {
+      if (event.button.tooltip === this._i18n.t('button.remove')) {
         await this._bookmarkService.removeBookmark(item.detail!)
-        vscode.window.showInformationMessage('Bookmark removed')
+        vscode.window.showInformationMessage(
+          this._i18n.t('message.bookmarkRemoved'),
+        )
         quickPick.items = quickPick.items.filter(
           (i) => (i as { detail: string }).detail !== item.detail,
         )

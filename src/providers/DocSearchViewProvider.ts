@@ -137,7 +137,9 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
     await this._libraryPicker.selectLibrary('search', async (libraryId) => {
       const library = this._libraryService.findLibraryById(libraryId)
       const query = await vscode.window.showInputBox({
-        prompt: this._i18n.t('label.searchIn', { query: library?.name || libraryId }),
+        prompt: this._i18n.t('label.searchIn', {
+          query: library?.name || libraryId,
+        }),
         placeHolder: this._i18n.t('placeholder.searchInput'),
       })
       if (query) {
@@ -210,7 +212,9 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
 
     if (!this._view) {
       console.error('[Context7] View still not available after focus')
-      vscode.window.showWarningMessage(this._i18n.t('message.pleaseOpenSidebar'))
+      vscode.window.showWarningMessage(
+        this._i18n.t('message.pleaseOpenSidebar'),
+      )
       return
     }
 
@@ -257,7 +261,9 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
    */
   private async _handleRefresh(): Promise<void> {
     if (!this._currentLibraryId || !this._currentQuery) {
-      vscode.window.showWarningMessage(this._i18n.t('message.noSearchToRefresh'))
+      vscode.window.showWarningMessage(
+        this._i18n.t('message.noSearchToRefresh'),
+      )
       return
     }
 
@@ -337,7 +343,9 @@ export class DocSearchViewProvider implements vscode.WebviewViewProvider {
       note: note || '',
     })
 
-    vscode.window.showInformationMessage(this._i18n.t('message.addedToBookmarks'))
+    vscode.window.showInformationMessage(
+      this._i18n.t('message.addedToBookmarks'),
+    )
     this._sendBookmarksUpdate()
   }
 

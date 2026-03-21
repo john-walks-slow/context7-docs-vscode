@@ -1,6 +1,23 @@
 import * as vscode from 'vscode'
 
 /**
+ * Webview 翻译文本
+ */
+export interface WebviewTranslations {
+  searchDocumentation: string
+  clickSearchHint: string
+  all: string
+  code: string
+  info: string
+  toggleWrap: string
+  refresh: string
+  copy: string
+  insert: string
+  copied: string
+  noResults: string
+}
+
+/**
  * HTML 构建选项
  */
 export interface HtmlOptions {
@@ -12,6 +29,8 @@ export interface HtmlOptions {
   cssUri: vscode.Uri
   /** CSP 安全策略 */
   csp: string
+  /** 翻译文本 */
+  translations: WebviewTranslations
 }
 
 /**
@@ -20,7 +39,7 @@ export interface HtmlOptions {
  * @returns 完整的 HTML 字符串
  */
 export function buildHtml(options: HtmlOptions): string {
-  const { theme, markedUri, cssUri, csp } = options
+  const { theme, markedUri, cssUri, csp, translations } = options
   const isDark = theme === 'dark'
 
   return `<!DOCTYPE html>
@@ -35,27 +54,30 @@ export function buildHtml(options: HtmlOptions): string {
 <body>
   <div class="tabs-container">
     <div class="tabs" id="tabs">
-      <div class="tab active" data-filter="all">All <span class="badge" id="badge-all">0</span></div>
-      <div class="tab" data-filter="code">Code <span class="badge" id="badge-code">0</span></div>
-      <div class="tab" data-filter="info">Info <span class="badge" id="badge-info">0</span></div>
+      <div class="tab active" data-filter="all">${translations.all} <span class="badge" id="badge-all">0</span></div>
+      <div class="tab" data-filter="code">${translations.code} <span class="badge" id="badge-code">0</span></div>
+      <div class="tab" data-filter="info">${translations.info} <span class="badge" id="badge-info">0</span></div>
     </div>
-    <button class="wrap-toggle" id="wrapToggle" title="Toggle code wrap">
+    <button class="wrap-toggle" id="wrapToggle" title="${translations.toggleWrap}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 6h18M3 12h15a3 3 0 1 1 0 6h-3M3 18h7"/>
       </svg>
     </button>
-    <button class="refresh-btn" id="refreshBtn" title="Refresh results" disabled>⟳</button>
+    <button class="refresh-btn" id="refreshBtn" title="${translations.refresh}" disabled>⟳</button>
   </div>
 
   <div class="content" id="content">
     <div class="empty-state">
-      <div class="title">Search documentation</div>
-      <div class="hint">Click the search icon above or run "Context7: Search Documentation"</div>
+      <div class="title">${translations.searchDocumentation}</div>
+      <div class="hint">${translations.clickSearchHint}</div>
     </div>
   </div>
 
   <script>
     const vscode = acquireVsCodeApi();
+    
+    // 翻译文本
+    const i18n = ${JSON.stringify(translations)};
 
     // 从 localStorage 恢复 wrap 状态（默认启用）
     const savedWrapMode = localStorage.getItem('context7-wrap-mode') !== 'false';
@@ -127,14 +149,14 @@ export function buildHtml(options: HtmlOptions): string {
         if (state.results.length === 0) {
           content.innerHTML = \`
             <div class="empty-state">
-              <div class="title">Search documentation</div>
-              <div class="hint">Click the search icon above or run "Context7: Search Documentation"</div>
+              <div class="title">\${i18n.searchDocumentation}</div>
+              <div class="hint">\${i18n.clickSearchHint}</div>
             </div>
           \`;
         } else {
           content.innerHTML = \`
             <div class="empty-state">
-              <div class="title">No \${state.filter} results</div>
+              <div class="title">\${i18n.noResults.replace('{filter}', state.filter)}</div>
             </div>
           \`;
         }
@@ -183,10 +205,10 @@ export function buildHtml(options: HtmlOptions): string {
                   \${sourceLinkHtml}
                 </div>
                 <div class="actions">
-                  <button onclick="copyCode(\${globalIndex}, this)" data-tooltip="Copy" aria-label="Copy code">
+                  <button onclick="copyCode(\${globalIndex}, this)" data-tooltip="\${i18n.copy}" aria-label="\${i18n.copy} code">
                     <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                   </button>
-                  <button onclick="insertCode(\${globalIndex})" data-tooltip="Insert" aria-label="Insert code">
+                  <button onclick="insertCode(\${globalIndex})" data-tooltip="\${i18n.insert}" aria-label="\${i18n.insert} code">
                     <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
                   </button>
                 </div>
@@ -214,10 +236,10 @@ export function buildHtml(options: HtmlOptions): string {
         vscode.postMessage({ command: 'copyCode', code });
         if (btn) {
           btn.classList.add('copied');
-          btn.dataset.tooltip = 'Copied!';
+          btn.dataset.tooltip = i18n.copied;
           setTimeout(() => {
             btn.classList.remove('copied');
-            btn.dataset.tooltip = 'Copy';
+            btn.dataset.tooltip = i18n.copy;
           }, 1500);
         }
       }
