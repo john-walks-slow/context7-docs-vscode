@@ -7,23 +7,20 @@
 
 Search library documentations, code snippets, and examples directly in VS Code, using Context7.
 
-![alt text](resources/screenshot.png)
+> ### What's New in 0.2.0
+>
+> - **Language Standard Library Detection** - Automatically detects and queries language standard libraries (Python stdlib, Rust std, Go stdlib, Node.js stdlib)
+> - **Enhanced Keywords** - Bind multiple keywords to a single library ID for better matching
+> - **Internationalization** - Full English and Chinese UI support
+> - **Improved Library Picker** - Libraries grouped by Recent/User/Preset sections; user libraries appear first
+> - **JSON Schema** - IntelliSense support for `context7.libraries` and `context7.pathPatterns` settings
 
-> AI has Context7 for instant docs. Now you do too！
-
-## What's New in 0.2.0
-
-- **Language Standard Library Detection** - Automatically detects and queries language standard libraries (Python stdlib, Rust std, Go stdlib, Node.js stdlib)
-- **Enhanced Keywords** - Bind multiple keywords to a single library ID for better matching
-- **Internationalization** - Full English and Chinese UI support
-- **Improved Library Picker** - Libraries grouped by Recent/User/Preset sections; user libraries appear first
-- **JSON Schema** - IntelliSense support for `context7.libraries` and `context7.pathPatterns` settings
+AI has Context7 for instant docs. Now you do too！
 
 ## Features
 
 - **Zero Setup** - Works without API key via MCP endpoint
 - **Smart Library Detection** - Auto-detects libraries from code using LSP (see below)
-- **Internationalization** - Full English and Chinese UI support
 - **Search History** - Automatically records query history
 - **Syntax Highlighting** - Render code blocks and markdown; auto-wrap
 - **Result Caching** - Cache for faster repeated searches
@@ -114,27 +111,16 @@ Both `context7.libraries` and `context7.pathPatterns` have JSON schema support f
 ## Development
 
 ```bash
-# Install dependencies
-pnpm install
-
-# Development mode
-pnpm watch
-
-# Build
-pnpm build
-
-# Run tests
+pnpm install        # Install dependencies
+pnpm watch          # Development mode
 
 # Development tasks
-pnpm watch:tsc    # TypeScript watch mode
-pnpm watch-tests  # Vitest watch mode
-pnpm test
-
-# Run tests with coverage
-pnpm test:coverage
-
-# Lint
-pnpm lint
+pnpm watch:tsc      # TypeScript watch mode
+pnpm watch-tests    # Vitest watch mode
+pnpm build          # Build
+pnpm test           # Run tests
+pnpm test:coverage  # Test coverage
+pnpm lint           # Lint
 ```
 
 Press `F5` to launch the extension in development mode.
@@ -165,33 +151,36 @@ code --install-extension context7-docs-0.1.0.vsix
 
 ## Architecture
 
-├── SearchCache.ts # Result caching
-│ ├── HistoryService.ts # Search history
-│ ├── BookmarkService.ts # Bookmark management
-│ └── I18nService.ts # Internationalization
-├── providers/
-│ ├── DocSearchViewProvider.ts # Webview provider
-│ ├── pickers/ # QuickPick pickers
-│ │ ├── LibraryPicker.ts
-│ │ └── HistoryPicker.ts
-│ └── webview/ # Webview communication
-│ ├── HtmlBuilder.ts
-│ └── MessageHandler.ts
-├── extension.ts # Entry point
-├── api/context7.ts # Context7 API client
+```
+src/
+├── extension.ts           # Entry point
+├── api/
+│   └── context7.ts        # Context7 API client
+├── constants/             # Configuration constants
+│   ├── languagePaths.ts
+│   └── libraries.ts
 ├── services/
-│ ├── LibraryService.ts # Library management
-│ ├── SearchService.ts # Search & highlighting
-│ └── SearchCache.ts # Result caching
+│   ├── LibraryService.ts  # Library management
+│   ├── SearchService.ts   # Search & highlighting
+│   ├── SearchCache.ts     # Result caching
+│   ├── HistoryService.ts  # Search history
+│   ├── BookmarkService.ts # Bookmark management
+│   └── I18nService.ts     # Internationalization
 ├── providers/
-│ └── DocSearchViewProvider.ts # Webview provider
+│   ├── DocSearchViewProvider.ts  # Webview provider
+│   ├── pickers/                  # QuickPick pickers
+│   │   ├── LibraryPicker.ts
+│   │   └── HistoryPicker.ts
+│   └── webview/                  # Webview communication
+│       ├── HtmlBuilder.ts
+│       └── MessageHandler.ts
 ├── utils/
-│ └── libraryDetector.ts # LSP-based library detection
-└── constants/ # Configuration
-
+│   ├── libraryDetector.ts  # LSP-based library detection
+│   └── markdownProcessor.ts
+└── types/
+    └── index.ts            # Type definitions
 ```
 
 ## License
 
 MIT
-```

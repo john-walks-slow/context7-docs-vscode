@@ -7,23 +7,20 @@
 
 使用 Context7 在 VS Code 中直接查询文档、代码示例和 API 说明。
 
-![alt text](resources/screenshot.png)
+> ### 0.2.0 新功能
+>
+> - **语言标准库检测** - 自动检测并查询语言标准库（Python stdlib、Rust std、Go stdlib、Node.js stdlib）
+> - **关键词增强** - 支持为单个库 ID 绑定多个关键词，提高匹配准确性
+> - **多语言支持** - 完整的中英文界面支持
+> - **库选择器优化** - 按 最近使用/用户库/预设库 分组显示；用户库优先显示
+> - **JSON Schema** - `context7.libraries` 和 `context7.pathPatterns` 配置支持智能提示
 
-> (眼馋 AI 的 Context7.. 终于人也能用了！)
-
-## 0.2.0 新功能
-
-- **语言标准库检测** - 自动检测并查询语言标准库（Python stdlib、Rust std、Go stdlib、Node.js stdlib）
-- **关键词增强** - 支持为单个库 ID 绑定多个关键词，提高匹配准确性
-- **多语言支持** - 完整的中英文界面支持
-- **库选择器优化** - 按 最近使用/用户库/预设库 分组显示；用户库优先显示
-- **JSON Schema** - `context7.libraries` 和 `context7.pathPatterns` 配置支持智能提示
+(眼馋 AI 的 Context7.. 终于人也能用了！)
 
 ## 特性
 
 - **开箱即用** - 无需任何配置即可使用（通过 MCP 匿名访问）
 - **智能库检测** - 基于 LSP 自动识别代码所属库 (支持 10+ 语言)
-- **多语言支持** - 完整的中英文界面
 - **历史记录** - 自动记录查询历史
 - **语法高亮** - 渲染代码块和 markdown，可选自动换行
 - **结果缓存** - 缓存加速重复搜索
@@ -132,33 +129,60 @@ pnpm lint           # 代码检查
 
 ## 架构
 
-├── SearchCache.ts # 结果缓存
-│ ├── HistoryService.ts # 搜索历史
-│ ├── BookmarkService.ts # 书签管理
-│ └── I18nService.ts # 国际化
-├── providers/
-│ ├── DocSearchViewProvider.ts # Webview 提供者
-│ ├── pickers/ # QuickPick 选择器
-│ │ ├── LibraryPicker.ts
-│ │ └── HistoryPicker.ts
-│ └── webview/ # Webview 通信
-│ ├── HtmlBuilder.ts
-│ └── MessageHandler.ts
-├── extension.ts # 入口
-├── api/context7.ts # Context7 API 客户端
+```
+src/
+├── extension.ts           # 入口
+├── api/
+│   └── context7.ts        # Context7 API 客户端
+├── constants/             # 配置常量
+│   ├── languagePaths.ts
+│   └── libraries.ts
 ├── services/
-│ ├── LibraryService.ts # 库管理
-│ ├── SearchService.ts # 搜索与高亮
-│ └── SearchCache.ts # 结果缓存
+│   ├── LibraryService.ts  # 库管理
+│   ├── SearchService.ts    # 搜索与高亮
+│   ├── SearchCache.ts     # 结果缓存
+│   ├── HistoryService.ts  # 搜索历史
+│   ├── BookmarkService.ts # 书签管理
+│   └── I18nService.ts     # 国际化
 ├── providers/
-│ └── DocSearchViewProvider.ts # Webview 提供者
+│   ├── DocSearchViewProvider.ts  # Webview 提供者
+│   ├── pickers/                  # QuickPick 选择器
+│   │   ├── LibraryPicker.ts
+│   │   └── HistoryPicker.ts
+│   └── webview/                  # Webview 通信
+│       ├── HtmlBuilder.ts
+│       └── MessageHandler.ts
 ├── utils/
-│ └── libraryDetector.ts # LSP 库检测
-└── constants/ # 配置
+│   ├── libraryDetector.ts  # LSP 库检测
+│   └── markdownProcessor.ts
+└── types/
+    └── index.ts            # 类型定义
+```
 
+## 打包
+
+```bash
+# 创建 .vsix 安装包
+pnpm pack:vsix
+```
+
+## 发布
+
+```bash
+# 发布到 VS Code Marketplace
+pnpm publish:vsix
+
+# 或指定版本发布
+vsce publish <version>
+```
+
+## 本地测试
+
+```bash
+# 本地安装 .vsix 进行测试
+code --install-extension context7-docs-0.1.0.vsix
 ```
 
 ## License
 
 MIT
-```
